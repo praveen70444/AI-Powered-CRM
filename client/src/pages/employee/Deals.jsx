@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, CalendarDays, User } from "lucide-react";
 import Modal from "../../components/employee/Modal";
+import ExportMenu from "../../components/employee/ExportMenu";
+import TagsInput from "../../components/employee/TagsInput";
 import { DEAL_STAGES } from "../../mock/deals";
-import { getDeals, createDeal, updateDeal } from "../../services/employeeService";
+import { getDeals, createDeal, updateDeal, exportDeals } from "../../services/employeeService";
 const STAGE_STYLES = {
   New: "border-t-blue-500",
   Qualified: "border-t-sky-500",
@@ -21,6 +23,7 @@ function Deals() {
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
+  const [viewDeal, setViewDeal] = useState(null);
   useEffect(() => {
     let isMounted = true;
     async function loadDeals() {
@@ -90,13 +93,16 @@ function Deals() {
         <p className="text-sm text-gray-500">
           {deals.length} deals · Total pipeline value {formatValue(deals.reduce((s, d) => s + d.value, 0))}
         </p>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          Add Deal
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu onExport={exportDeals} />
+          <button
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            Add Deal
+          </button>
+        </div>
       </div>
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -124,6 +130,7 @@ function Deals() {
                     key={deal.id}
                     draggable
                     onDragStart={() => setDraggedId(deal.id)}
+                    onClick={() => setViewDeal(deal)}
                     className={`bg-white rounded-xl border border-gray-200 border-t-4 ${STAGE_STYLES[deal.stage]} shadow-sm p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow`}
                   >
                     <p className="text-sm font-medium text-gray-900">{deal.title}</p>
@@ -190,6 +197,29 @@ function Deals() {
             <input type="date" name="closeDate" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
           </div>
         </form>
+      </Modal>
+
+      {/* Deal detail / tags modal */}
+      <Modal
+        open={!!viewDeal}
+        onClose={() => setViewDeal(null)}
+        title={viewDeal?.title || "Deal"}
+        footer={<button onClick={() => setViewDeal(null)} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Close</button>}
+      >
+        {viewDeal && (
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <div><span className="text-gray-400">Company:</span> <span className="font-medium">{viewDeal.company}</span></div>
+              <div><span className="text-gray-400">Stage:</span> <span className="font-medium">{viewDeal.stage}</span></div>
+              <div><span className="text-gray-400">Value:</span> <span className="font-semibold text-blue-600">{formatValue(viewDeal.value)}</span></div>
+              <div><span className="text-gray-400">Close:</span> <span>{viewDeal.closeDate || "—"}</span></div>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-gray-500 block mb-1.5">Tags</span>
+              <TagsInput entityType="deal" entityId={viewDeal.id} />
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

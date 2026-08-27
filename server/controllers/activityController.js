@@ -2,19 +2,14 @@ const activityService = require("../services/activityService");
 const getActivities = async (req, res) => {
   try {
     const { userId, organizationId } = req.user;
-    const activities = await activityService.getActivities(organizationId, userId);
-    res.status(200).json({
-      success: true,
-      message: "Activities fetched successfully",
-      data: activities,
+    const { page = 1, limit = 100, search = '', type = '' } = req.query;
+    const result = await activityService.getActivities(organizationId, userId, {
+      page: parseInt(page), limit: Math.min(parseInt(limit), 500), search, type,
     });
+    res.status(200).json({ success: true, message: "Activities fetched successfully", ...result });
   } catch (error) {
     console.error("Get activities error:", error);
-
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.statusCode ? error.message : "Failed to load activities",
-    });
+    res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to load activities" });
   }
 };
 const createActivity = async (req, res) => {

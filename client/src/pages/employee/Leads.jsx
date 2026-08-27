@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Users } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Users, AlertCircle } from "lucide-react";
 import ListToolbar from "../../components/employee/ListToolbar";
 import FilterSelect from "../../components/employee/FilterSelect";
 import StatusBadge from "../../components/employee/StatusBadge";
@@ -7,8 +7,12 @@ import RowActions from "../../components/employee/RowActions";
 import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
+import ExportMenu from "../../components/employee/ExportMenu";
+import ConvertLeadModal from "../../components/employee/ConvertLeadModal";
+import TagsInput from "../../components/employee/TagsInput";
 import { LEAD_STATUSES, LEAD_SOURCES } from "../../mock/leads";
-import { getLeads, createLead, updateLead, deleteLead } from "../../services/employeeService";
+import { getLeads, createLead, updateLead, deleteLead, exportLeads } from "../../services/employeeService";
+import api from "../../services/api";
 const PAGE_SIZE = 6;
 function Leads() {
   const [leads, setLeads] = useState([]);
@@ -18,10 +22,13 @@ function Leads() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [source, setSource] = useState("");
+  const [convertTarget, setConvertTarget] = useState(null);
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeLead, setActiveLead] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  // ponytail: simple state for duplicate warning — no abstraction needed
+  const [dupWarning, setDupWarning] = useState("");
   useEffect(() => {
     let isMounted = true;
     async function loadLeads() {
@@ -58,11 +65,25 @@ function Leads() {
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   function openAddModal() {
     setActiveLead(null);
+    setDupWarning("");
     setModalOpen(true);
   }
   function openEditModal(lead) {
     setActiveLead(lead);
+    setDupWarning("");
     setModalOpen(true);
+  }
+  async function checkDuplicate(email, phone) {
+    if (!email && !phone) return;
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append("email", email);
+      if (phone) params.append("phone", phone);
+      if (activeLead) params.append("excludeId", activeLead.id);
+      const res = await api.get(`/employee/leads/check-duplicate?${params}`);
+      const dupes = res.data?.data?.duplicates || [];
+      setDupWarning(dupes.length > 0 ? `⚠️ Similar lead exists: ${dupes[0].name} (${dupes[0].email})` : "");
+    } catch { /* silent */ }
   }
   async function handleSave(e) {
     e.preventDefault();
@@ -108,6 +129,9 @@ function Leads() {
   }
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-end px-6 pt-4 gap-2">
+        <ExportMenu onExport={exportLeads} />
+      </div>
       <ListToolbar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
@@ -167,6 +191,9 @@ function Leads() {
                       onView={() => openEditModal(lead)}
                       onEdit={() => openEditModal(lead)}
                       onDelete={() => setDeleteTarget(lead)}
+                      extra={lead.status !== "Converted" ? [
+                        { label: "Convert to Customer", onClick: () => setConvertTarget(lead) }
+                      ] : []}
                     />
                   </td>
                 </tr>
@@ -192,6 +219,11 @@ function Leads() {
         }
       >
         <form id="lead-form" onSubmit={handleSave} className="space-y-4">
+          {dupWarning && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+              <AlertCircle size={15} className="shrink-0" />{dupWarning}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Full Name</label>
@@ -205,11 +237,15 @@ function Leads() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Email</label>
-              <input type="email" name="email" defaultValue={activeLead?.email} required className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+              <input type="email" name="email" defaultValue={activeLead?.email} required
+                onBlur={e => checkDuplicate(e.target.value, document.querySelector('[name="phone"]')?.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Phone</label>
-              <input name="phone" defaultValue={activeLead?.phone} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+              <input name="phone" defaultValue={activeLead?.phone}
+                onBlur={e => checkDuplicate(document.querySelector('[name="email"]')?.value, e.target.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -230,6 +266,12 @@ function Leads() {
             <label className="text-xs font-medium text-gray-500">Deal Value (₹)</label>
             <input type="number" name="value" defaultValue={activeLead?.value} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
           </div>
+          {activeLead && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Tags</label>
+              <TagsInput entityType="lead" entityId={activeLead.id} />
+            </div>
+          )}
         </form>
       </Modal>
       <Modal
@@ -251,6 +293,20 @@ function Leads() {
           Are you sure you want to delete <span className="font-medium text-gray-900">{deleteTarget?.name}</span>? This action cannot be undone.
         </p>
       </Modal>
+
+      {/* Convert Lead Modal */}
+      <ConvertLeadModal
+        open={!!convertTarget}
+        lead={convertTarget}
+        onClose={() => setConvertTarget(null)}
+        onConverted={({ lead: updatedLead, customer }) => {
+          // Update the lead in the list to show "Converted" status
+          setLeads((prev) =>
+            prev.map((l) => (l.id === updatedLead?.id ? { ...l, status: "Converted" } : l))
+          );
+          setConvertTarget(null);
+        }}
+      />
     </div>
   );
 }

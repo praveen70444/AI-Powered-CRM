@@ -1,16 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  Users,
-  Search,
-  UserPlus,
-  X,
-  Mail,
-  Shield,
-  CheckCircle,
-} from "lucide-react";
+import { Users, Search, UserPlus, X, Mail, Shield, CheckCircle } from "lucide-react";
 import {
   getOrganizationEmployees,
   createOrganizationInvitation,
+  updateEmployeeStatus,
 } from "../../services/organizationService";
 function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -209,6 +202,7 @@ function EmployeesPage() {
                     <th className="text-left px-6 py-4 font-semibold text-slate-600">
                       Status
                     </th>
+                    <th className="px-6 py-4" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -236,6 +230,27 @@ function EmployeesPage() {
                         >
                           {employee.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <select
+                          value={employee.status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            try {
+                              await updateEmployeeStatus(employee.id, newStatus);
+                              setEmployees(prev =>
+                                prev.map(emp => emp.id === employee.id ? { ...emp, status: newStatus } : emp)
+                              );
+                            } catch {
+                              // silent fail — UI reverts naturally
+                            }
+                          }}
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="ACTIVE">Active</option>
+                          <option value="INACTIVE">Inactive</option>
+                          <option value="SUSPENDED">Suspended</option>
+                        </select>
                       </td>
                     </tr>
                   ))}

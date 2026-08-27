@@ -15,18 +15,23 @@ const mapTask = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
-const getTasks = async (organizationId, ownerId) => {
-  const result = await pool.query(
-    `
-    SELECT *
-    FROM tasks
-    WHERE organization_id = $1
-      AND owner_id = $2
-    ORDER BY created_at DESC
-    `,
-    [organizationId, ownerId]
-  );
-  return result.rows.map(mapTask);
+const getTasks = async (organizationId, ownerId, { page = 1, limit = 200, search = '', status = '', priority = '' } = {}) => {
+  const offset = (page - 1) * limit;
+  const conditions = ['organization_id = $1', 'owner_id = $2'];
+  const params = [organizationId, ownerId];
+  let idx = 3;
+  if (search) { conditions.push(`title ILIKE $${idx}`); params.push(`%${search}%`); idx++; }
+  if (status) { conditions.push(`status = $${idx}`); params.push(status); idx++; }
+  if (priority) { conditions.push(`priority = $${idx}`); params.push(priority); idx++; }
+  const where = conditions.join(' AND ');
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(`SELECT * FROM tasks WHERE ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, [...params, limit, offset]),
+    pool.query(`SELECT COUNT(*) FROM tasks WHERE ${where}`, params),
+  ]);
+  return {
+    data: dataRes.rows.map(mapTask),
+    pagination: { page, limit, total: parseInt(countRes.rows[0].count), totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit) },
+  };
 };
 const getTaskById = async (id, organizationId, ownerId) => {
   const result = await pool.query(
@@ -168,6 +173,21 @@ const deleteTask = async (id, organizationId, ownerId) => {
   }
   return { id };
 };
+
+const getAllTasks = async (organizationId, ownerId) => {
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM tasks
+    WHERE organization_id = $1
+      AND owner_id = $2
+    ORDER BY created_at DESC
+    `,
+    [organizationId, ownerId]
+  );
+  return result.rows.map(mapTask);
+};
+
 module.exports = {
   TASK_TYPES,
   TASK_PRIORITIES,
@@ -177,4 +197,5 @@ module.exports = {
   createTask,
   updateTask,
   deleteTask,
+  getAllTasks,
 };

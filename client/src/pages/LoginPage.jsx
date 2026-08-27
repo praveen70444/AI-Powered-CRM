@@ -204,6 +204,14 @@ function LoginPage() {
               >
                 Create your organization account
               </Link>
+              <div className="mt-3">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-slate-500 hover:text-blue-600 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
             </div>
           </div>
         </div>

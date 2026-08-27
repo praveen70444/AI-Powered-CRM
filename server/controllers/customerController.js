@@ -2,18 +2,14 @@ const customerService = require("../services/customerService");
 const getCustomers = async (req, res) => {
   try {
     const { userId, organizationId } = req.user;
-    const customers = await customerService.getCustomers(organizationId, userId);
-    res.status(200).json({
-      success: true,
-      message: "Customers fetched successfully",
-      data: customers,
+    const { page = 1, limit = 50, search = '', status = '' } = req.query;
+    const result = await customerService.getCustomers(organizationId, userId, {
+      page: parseInt(page), limit: Math.min(parseInt(limit), 200), search, status,
     });
+    res.status(200).json({ success: true, message: "Customers fetched successfully", ...result });
   } catch (error) {
     console.error("Get customers error:", error);
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.statusCode ? error.message : "Failed to load customers",
-    });
+    res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to load customers" });
   }
 };
 const getCustomer = async (req, res) => {

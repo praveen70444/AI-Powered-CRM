@@ -3,12 +3,17 @@ import LandingPage from "../pages/LandingPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import AcceptInvitationPage from "../pages/AcceptInvitationPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 import OrganizationLayout from "../components/organization/OrganizationLayout";
 import OrganizationDashboard from "../pages/organization/OrganizationDashboard";
 import EmployeesPage from "../pages/organization/EmployeesPage";
 import InvitationsPage from "../pages/organization/InvitationsPage";
 import OrganizationSettingsPage from "../pages/organization/OrganizationSettingsPage";
 import OrganizationProfilePage from "../pages/organization/OrganizationProfilePage";
+import AuditLogsPage from "../pages/organization/AuditLogsPage";
+import WebhooksPage from "../pages/organization/WebhooksPage";
+import CustomFieldsPage from "../pages/organization/CustomFieldsPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import EmployeeLayout from "../components/employee/EmployeeLayout";
 import DashboardHome from "../pages/employee/DashboardHome";
@@ -20,14 +25,24 @@ import Activities from "../pages/employee/Activities";
 import Notes from "../pages/employee/Notes";
 import Notifications from "../pages/employee/Notifications";
 import Profile from "../pages/employee/Profile";
+import Calendar from "../pages/employee/Calendar";
+import Analytics from "../pages/employee/Analytics";
+import Products from "../pages/employee/Products";
+import Quotes from "../pages/employee/Quotes";
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+        {/* Organization Admin routes */}
         <Route path="/organization" element={
             <ProtectedRoute allowedRoles={["ORG_ADMIN"]}>
               <OrganizationLayout />
@@ -38,7 +53,12 @@ function AppRoutes() {
             <Route path="invitations" element={<InvitationsPage />} />
             <Route path="settings" element={<OrganizationSettingsPage />} />
             <Route path="profile" element={<OrganizationProfilePage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="webhooks" element={<WebhooksPage />} />
+            <Route path="custom-fields" element={<CustomFieldsPage />} />
         </Route>
+
+        {/* Employee routes */}
         <Route path="/employee" element={
             <ProtectedRoute allowedRoles={["EMPLOYEE"]}>
               <EmployeeLayout />
@@ -50,7 +70,11 @@ function AppRoutes() {
           <Route path="deals" element={<Deals />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="activities" element={<Activities />} />
+          <Route path="calendar" element={<Calendar />} />
           <Route path="notes" element={<Notes />} />
+          <Route path="products" element={<Products />} />
+          <Route path="quotes" element={<Quotes />} />
+          <Route path="analytics" element={<Analytics />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="profile" element={<Profile />} />
         </Route>

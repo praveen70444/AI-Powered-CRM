@@ -32,19 +32,25 @@ const ensureCustomerBelongsToOwner = async (customerId, organizationId, ownerId)
   }
   return customerId;
 };
-const getDeals = async (organizationId, ownerId) => {
-  const result = await pool.query(
-    `
-    SELECT d.*, u.name AS owner_name
-    FROM deals d
-    JOIN users u ON u.id = d.owner_id
-    WHERE d.organization_id = $1
-      AND d.owner_id = $2
-    ORDER BY d.created_at DESC
-    `,
-    [organizationId, ownerId]
-  );
-  return result.rows.map(mapDeal);
+const getDeals = async (organizationId, ownerId, { page = 1, limit = 200, search = '', stage = '' } = {}) => {
+  const offset = (page - 1) * limit;
+  const conditions = ['d.organization_id = $1', 'd.owner_id = $2'];
+  const params = [organizationId, ownerId];
+  let idx = 3;
+  if (search) {
+    conditions.push(`(d.search_vector @@ plainto_tsquery('english', $${idx}) OR d.title ILIKE $${idx + 1} OR d.company ILIKE $${idx + 1})`);
+    params.push(search, `%${search}%`); idx += 2;
+  }
+  if (stage) { conditions.push(`d.stage = $${idx}`); params.push(stage); idx++; }
+  const where = conditions.join(' AND ');
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(`SELECT d.*, u.name AS owner_name FROM deals d JOIN users u ON u.id = d.owner_id WHERE ${where} ORDER BY d.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, [...params, limit, offset]),
+    pool.query(`SELECT COUNT(*) FROM deals d WHERE ${where}`, params),
+  ]);
+  return {
+    data: dataRes.rows.map(mapDeal),
+    pagination: { page, limit, total: parseInt(countRes.rows[0].count), totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit) },
+  };
 };
 const getDealById = async (id, organizationId, ownerId) => {
   const result = await pool.query(
@@ -171,6 +177,22 @@ const deleteDeal = async (id, organizationId, ownerId) => {
   }
   return { id };
 };
+
+const getAllDeals = async (organizationId, ownerId) => {
+  const result = await pool.query(
+    `
+    SELECT d.*, u.name AS owner_name
+    FROM deals d
+    JOIN users u ON u.id = d.owner_id
+    WHERE d.organization_id = $1
+      AND d.owner_id = $2
+    ORDER BY d.created_at DESC
+    `,
+    [organizationId, ownerId]
+  );
+  return result.rows.map(mapDeal);
+};
+
 module.exports = {
   DEAL_STAGES,
   getDeals,
@@ -178,4 +200,5 @@ module.exports = {
   createDeal,
   updateDeal,
   deleteDeal,
+  getAllDeals,
 };

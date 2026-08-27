@@ -2,18 +2,14 @@ const dealService = require("../services/dealService");
 const getDeals = async (req, res) => {
   try {
     const { userId, organizationId } = req.user;
-    const deals = await dealService.getDeals(organizationId, userId);
-    res.status(200).json({
-      success: true,
-      message: "Deals fetched successfully",
-      data: deals,
+    const { page = 1, limit = 200, search = '', stage = '' } = req.query;
+    const result = await dealService.getDeals(organizationId, userId, {
+      page: parseInt(page), limit: Math.min(parseInt(limit), 500), search, stage,
     });
+    res.status(200).json({ success: true, message: "Deals fetched successfully", ...result });
   } catch (error) {
     console.error("Get deals error:", error);
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.statusCode ? error.message : "Failed to load deals",
-    });
+    res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to load deals" });
   }
 };
 const getDeal = async (req, res) => {

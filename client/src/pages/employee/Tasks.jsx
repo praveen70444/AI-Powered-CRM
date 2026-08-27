@@ -6,8 +6,9 @@ import StatusBadge from "../../components/employee/StatusBadge";
 import RowActions from "../../components/employee/RowActions";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
+import ExportMenu from "../../components/employee/ExportMenu";
 import { TASK_STATUSES, TASK_PRIORITIES } from "../../mock/tasks";
-import { getTasks, createTask, updateTask, deleteTask } from "../../services/employeeService";
+import { getTasks, createTask, updateTask, deleteTask, exportTasks } from "../../services/employeeService";
 const TABS = ["All", "Pending", "In Progress", "Completed"];
 function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -112,18 +113,23 @@ function Tasks() {
   }
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="flex items-center gap-1 px-6 pt-4">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-              tab === t ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="flex items-center gap-1 px-6 pt-4 justify-between">
+        <div className="flex items-center gap-1">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                tab === t ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="pr-2">
+          <ExportMenu onExport={exportTasks} />
+        </div>
       </div>
       <ListToolbar
         searchValue={search}

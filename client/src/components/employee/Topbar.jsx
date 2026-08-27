@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Menu, Search, Bell, ChevronDown, LogOut, UserCircle } from "lucide-react";
+import { Menu, Bell, ChevronDown, LogOut, UserCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getNotifications } from "../../services/employeeService";
+import GlobalSearch from "./GlobalSearch";
 const TITLES = {
   "/employee": "Dashboard",
   "/employee/leads": "Leads",
@@ -13,6 +14,9 @@ const TITLES = {
   "/employee/notes": "Notes",
   "/employee/notifications": "Notifications",
   "/employee/profile": "Profile",
+  "/employee/calendar": "Calendar",
+  "/employee/analytics": "Analytics",
+  "/employee/products": "Products",
 };
 function Topbar({ onMenuClick }) {
   const location = useLocation();
@@ -66,11 +70,7 @@ function Topbar({ onMenuClick }) {
         <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
       </div>
       <div className="hidden md:flex relative flex-1 max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          placeholder="Search leads, customers, deals..."
-          className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-        />
+        <GlobalSearch />
       </div>
       <div className="flex items-center gap-2">
         <button

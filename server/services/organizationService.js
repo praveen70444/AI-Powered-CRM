@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const pool = require("../config/db");
+const { sendInvitationEmail } = require("./emailService");
 const getOrganizationDashboard = async (organizationId) => {
   const totalEmployeesResult = await pool.query(
     `
@@ -170,9 +171,36 @@ const createInvitation = async ({
     ]
   );
   const invitation = result.rows[0];
+  
+  // Get organization name for email
+  const orgResult = await pool.query(
+    'SELECT name FROM organizations WHERE id = $1',
+    [organizationId]
+  );
+  const organizationName = orgResult.rows[0]?.name || 'CRM Portal';
+  
+  // Create invitation URL
+  const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-invitation/${rawToken}`;
+  
+  // Send invitation email
+  try {
+    await sendInvitationEmail({
+      email: normalizedEmail,
+      invitationUrl,
+      organizationName,
+      role,
+      organizationId,
+      invitedBy,
+    });
+  } catch (emailError) {
+    console.error('Failed to send invitation email:', emailError);
+    // Don't fail the invitation creation if email fails
+  }
+  
   return {
     ...invitation,
     invitationToken: rawToken,
+    invitationUrl, // Return URL for display/copy
   };
 };
 const getOrganizationInvitations = async (organizationId) => {

@@ -53,9 +53,15 @@ const loginUser = async (req, res) => {
         message: "Email and password are required",
       });
     }
+    
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    
     const result = await authService.loginUser({
       email: email.trim().toLowerCase(),
       password,
+      ipAddress,
+      userAgent,
     });
     return res.status(200).json({
       success: true,

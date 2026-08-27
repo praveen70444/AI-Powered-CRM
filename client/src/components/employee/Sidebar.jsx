@@ -1,17 +1,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  LayoutDashboard,
-  Users,
-  Contact,
-  KanbanSquare,
-  ListChecks,
-  History,
-  StickyNote,
-  Bell,
-  UserCircle,
-  LogOut,
-  X,
+  LayoutDashboard, Users, Contact, KanbanSquare, ListChecks, History,
+  StickyNote, Bell, UserCircle, LogOut, X, CalendarDays, TrendingUp, Package, FileText,
 } from "lucide-react";
 const NAV_ITEMS = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -20,7 +11,11 @@ const NAV_ITEMS = [
   { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
   { to: "/employee/tasks", label: "Tasks", icon: ListChecks },
   { to: "/employee/activities", label: "Activities", icon: History },
+  { to: "/employee/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/employee/notes", label: "Notes", icon: StickyNote },
+  { to: "/employee/products", label: "Products", icon: Package },
+  { to: "/employee/quotes", label: "Quotes", icon: FileText },
+  { to: "/employee/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/employee/notifications", label: "Notifications", icon: Bell },
   { to: "/employee/profile", label: "Profile", icon: UserCircle },
 ];

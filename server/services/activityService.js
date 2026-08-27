@@ -10,18 +10,22 @@ const mapActivity = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
-const getActivities = async (organizationId, ownerId) => {
-  const result = await pool.query(
-    `
-    SELECT *
-    FROM activities
-    WHERE organization_id = $1
-      AND owner_id = $2
-    ORDER BY occurred_at DESC
-    `,
-    [organizationId, ownerId]
-  );
-  return result.rows.map(mapActivity);
+const getActivities = async (organizationId, ownerId, { page = 1, limit = 100, search = '', type = '' } = {}) => {
+  const offset = (page - 1) * limit;
+  const conditions = ['organization_id = $1', 'owner_id = $2'];
+  const params = [organizationId, ownerId];
+  let idx = 3;
+  if (search) { conditions.push(`(title ILIKE $${idx} OR related_to ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
+  if (type) { conditions.push(`type = $${idx}`); params.push(type); idx++; }
+  const where = conditions.join(' AND ');
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(`SELECT * FROM activities WHERE ${where} ORDER BY occurred_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, [...params, limit, offset]),
+    pool.query(`SELECT COUNT(*) FROM activities WHERE ${where}`, params),
+  ]);
+  return {
+    data: dataRes.rows.map(mapActivity),
+    pagination: { page, limit, total: parseInt(countRes.rows[0].count), totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit) },
+  };
 };
 const getActivityById = async (id, organizationId, ownerId) => {
   const result = await pool.query(

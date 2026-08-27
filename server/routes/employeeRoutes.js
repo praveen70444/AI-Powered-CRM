@@ -3,6 +3,8 @@ const {
   getProfile,
   updateProfile,
   getDashboard,
+  getNotificationPreferences,
+  updateNotificationPreferences,
 } = require("../controllers/employeeController");
 const {
   getLeads,
@@ -10,6 +12,8 @@ const {
   createLead,
   updateLead,
   deleteLead,
+  convertLead,
+  getConversionHistory,
 } = require("../controllers/leadController");
 const {
   getCustomers,
@@ -49,42 +53,159 @@ const {
   markNotificationRead,
   markAllNotificationsRead,
 } = require("../controllers/notificationController");
+const {
+  exportLeads,
+  exportCustomers,
+  exportDeals,
+  exportTasks,
+} = require("../controllers/exportController");
+const {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getAllProducts,
+} = require("../controllers/productController");
+const {
+  getQuotes,
+  getQuoteById,
+  createQuote,
+  updateQuote,
+  deleteQuote,
+  addLineItem,
+  removeLineItem,
+} = require("../controllers/quoteController");
+const {
+  getEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} = require("../controllers/calendarController");
+const {
+  getTags,
+  createTag,
+  deleteTag,
+  getEntityTags,
+  addTagToEntity,
+  removeTagFromEntity,
+} = require("../controllers/tagController");
+const { globalSearch } = require("../controllers/searchController");
+const { checkLeadDuplicate, checkCustomerDuplicate } = require("../controllers/duplicateController");
+const { getAnalyticsOverview, getSalesForecast, getWinLossAnalysis } = require("../controllers/analyticsController");
+const { getCustomFieldValues, upsertCustomFieldValues, getCustomFields } = require("../controllers/customFieldController");
 const authMiddleware = require("../middleware/authMiddleware");
 const { requireEmployee } = require("../middleware/roleMiddleware");
 const router = express.Router();
 router.use(authMiddleware, requireEmployee);
+
 router.get("/dashboard", getDashboard);
 router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
+
+// Notification preferences
+router.get("/notification-preferences", getNotificationPreferences);
+router.put("/notification-preferences", updateNotificationPreferences);
+
+// Global search
+router.get("/search", globalSearch);
+
+// Analytics
+router.get("/analytics/overview", getAnalyticsOverview);
+router.get("/analytics/forecast", getSalesForecast);
+router.get("/analytics/win-loss", getWinLossAnalysis);
+
+// Duplicate detection (BEFORE /:id routes)
+router.get("/leads/check-duplicate", checkLeadDuplicate);
+router.get("/customers/check-duplicate", checkCustomerDuplicate);
+
+// Leads
 router.get("/leads", getLeads);
-router.get("/leads/:id", getLead);
 router.post("/leads", createLead);
+router.get("/leads/:id", getLead);
 router.put("/leads/:id", updateLead);
 router.delete("/leads/:id", deleteLead);
+router.post("/leads/:id/convert", convertLead);
+router.get("/leads/:id/conversion-history", getConversionHistory);
+
+// Customers
 router.get("/customers", getCustomers);
-router.get("/customers/:id", getCustomer);
 router.post("/customers", createCustomer);
+router.get("/customers/:id", getCustomer);
 router.put("/customers/:id", updateCustomer);
 router.delete("/customers/:id", deleteCustomer);
+
+// Deals
 router.get("/deals", getDeals);
-router.get("/deals/:id", getDeal);
 router.post("/deals", createDeal);
+router.get("/deals/:id", getDeal);
 router.put("/deals/:id", updateDeal);
 router.delete("/deals/:id", deleteDeal);
+
+// Tasks
 router.get("/tasks", getTasks);
-router.get("/tasks/:id", getTask);
 router.post("/tasks", createTask);
+router.get("/tasks/:id", getTask);
 router.put("/tasks/:id", updateTask);
 router.delete("/tasks/:id", deleteTask);
+
+// Activities
 router.get("/activities", getActivities);
 router.post("/activities", createActivity);
 router.put("/activities/:id", updateActivity);
 router.delete("/activities/:id", deleteActivity);
+
+// Notes
 router.get("/notes", getNotes);
 router.post("/notes", createNote);
 router.put("/notes/:id", updateNote);
 router.delete("/notes/:id", deleteNote);
+
+// Notifications
 router.get("/notifications", getNotifications);
 router.put("/notifications/read-all", markAllNotificationsRead);
 router.put("/notifications/:id/read", markNotificationRead);
+
+// Export routes
+router.get("/export/leads", exportLeads);
+router.get("/export/customers", exportCustomers);
+router.get("/export/deals", exportDeals);
+router.get("/export/tasks", exportTasks);
+
+// Products
+router.get("/products/all", getAllProducts);
+router.get("/products", getProducts);
+router.post("/products", createProduct);
+router.get("/products/:id", getProductById);
+router.put("/products/:id", updateProduct);
+router.delete("/products/:id", deleteProduct);
+
+// Quotes
+router.get("/quotes", getQuotes);
+router.post("/quotes", createQuote);
+router.get("/quotes/:id", getQuoteById);
+router.put("/quotes/:id", updateQuote);
+router.delete("/quotes/:id", deleteQuote);
+router.post("/quotes/:id/line-items", addLineItem);
+router.delete("/quotes/:quoteId/line-items/:itemId", removeLineItem);
+
+// Calendar
+router.get("/calendar", getEvents);
+router.post("/calendar", createEvent);
+router.put("/calendar/:id", updateEvent);
+router.delete("/calendar/:id", deleteEvent);
+
+// Tags
+router.get("/tags", getTags);
+router.post("/tags", createTag);
+router.delete("/tags/:id", deleteTag);
+router.get("/tags/:entityType/:entityId", getEntityTags);
+router.post("/tags/:entityType/:entityId/:tagId", addTagToEntity);
+router.delete("/tags/:entityType/:entityId/:tagId", removeTagFromEntity);
+
+// Custom field values (employees read/write values per entity)
+router.get("/custom-fields", getCustomFields);
+router.get("/custom-field-values/:entityType/:entityId", getCustomFieldValues);
+router.post("/custom-field-values/:entityType/:entityId", upsertCustomFieldValues);
+
 module.exports = router;

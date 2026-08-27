@@ -16,19 +16,28 @@ const mapCustomer = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
-const getCustomers = async (organizationId, ownerId) => {
-  const result = await pool.query(
-    `
-    SELECT c.*, u.name AS owner_name
-    FROM customers c
-    JOIN users u ON u.id = c.owner_id
-    WHERE c.organization_id = $1
-      AND c.owner_id = $2
-    ORDER BY c.created_at DESC
-    `,
-    [organizationId, ownerId]
-  );
-  return result.rows.map(mapCustomer);
+const getCustomers = async (organizationId, ownerId, { page = 1, limit = 50, search = '', status = '' } = {}) => {
+  const offset = (page - 1) * limit;
+  const conditions = ['c.organization_id = $1', 'c.owner_id = $2'];
+  const params = [organizationId, ownerId];
+  let idx = 3;
+
+  if (search) {
+    conditions.push(`(c.search_vector @@ plainto_tsquery('english', $${idx}) OR c.name ILIKE $${idx + 1} OR c.company ILIKE $${idx + 1} OR c.email ILIKE $${idx + 1})`);
+    params.push(search, `%${search}%`);
+    idx += 2;
+  }
+  if (status) { conditions.push(`c.status = $${idx}`); params.push(status); idx++; }
+
+  const where = conditions.join(' AND ');
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(`SELECT c.*, u.name AS owner_name FROM customers c JOIN users u ON u.id = c.owner_id WHERE ${where} ORDER BY c.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, [...params, limit, offset]),
+    pool.query(`SELECT COUNT(*) FROM customers c WHERE ${where}`, params),
+  ]);
+  return {
+    data: dataRes.rows.map(mapCustomer),
+    pagination: { page, limit, total: parseInt(countRes.rows[0].count), totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit) },
+  };
 };
 const getCustomerById = async (id, organizationId, ownerId) => {
   const result = await pool.query(
@@ -155,6 +164,22 @@ const deleteCustomer = async (id, organizationId, ownerId) => {
   }
   return { id };
 };
+
+const getAllCustomers = async (organizationId, ownerId) => {
+  const result = await pool.query(
+    `
+    SELECT c.*, u.name AS owner_name
+    FROM customers c
+    JOIN users u ON u.id = c.owner_id
+    WHERE c.organization_id = $1
+      AND c.owner_id = $2
+    ORDER BY c.created_at DESC
+    `,
+    [organizationId, ownerId]
+  );
+  return result.rows.map(mapCustomer);
+};
+
 module.exports = {
   CUSTOMER_STATUSES,
   getCustomers,
@@ -162,4 +187,5 @@ module.exports = {
   createCustomer,
   updateCustomer,
   deleteCustomer,
+  getAllCustomers,
 };

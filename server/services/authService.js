@@ -2,6 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const pool = require("../config/db");
+const { logLogin, logAudit } = require("./auditService");
+const { isAccountLocked, recordFailedLogin, resetFailedLoginAttempts } = require("./passwordService");
+const { sendWelcomeEmail } = require("./emailService");
 const registerOrganization = async ({
   organizationName,
   adminName,
@@ -63,7 +66,22 @@ const registerOrganization = async ({
     client.release();
   }
 };
-const loginUser = async ({ email, password }) => {
+const loginUser = async ({ email, password, ipAddress, userAgent }) => {
+  // Check if account is locked
+  const locked = await isAccountLocked(email);
+  if (locked) {
+    await logLogin({
+      userId: null,
+      success: false,
+      failureReason: 'Account locked',
+      ipAddress,
+      userAgent,
+    });
+    const error = new Error("Account is temporarily locked due to multiple failed login attempts. Please try again in 30 minutes or reset your password.");
+    error.statusCode = 403;
+    throw error;
+  }
+  
   const result = await pool.query(
     `
     SELECT
@@ -80,12 +98,26 @@ const loginUser = async ({ email, password }) => {
     [email]
   );
   if (result.rows.length === 0) {
+    await logLogin({
+      userId: null,
+      success: false,
+      failureReason: 'Invalid credentials',
+      ipAddress,
+      userAgent,
+    });
     const error = new Error("Invalid email or password");
     error.statusCode = 401;
     throw error;
   }
   const user = result.rows[0];
   if (user.status !== "ACTIVE") {
+    await logLogin({
+      userId: user.id,
+      success: false,
+      failureReason: 'Account not active',
+      ipAddress,
+      userAgent,
+    });
     const error = new Error("User account is not active");
     error.statusCode = 403;
     throw error;
@@ -95,10 +127,22 @@ const loginUser = async ({ email, password }) => {
     user.password_hash
   );
   if (!passwordMatches) {
+    await recordFailedLogin(email);
+    await logLogin({
+      userId: user.id,
+      success: false,
+      failureReason: 'Invalid password',
+      ipAddress,
+      userAgent,
+    });
     const error = new Error("Invalid email or password");
     error.statusCode = 401;
     throw error;
   }
+  
+  // Reset failed login attempts on successful login
+  await resetFailedLoginAttempts(user.id);
+  
   const token = jwt.sign(
     {
       userId: user.id,
@@ -118,6 +162,23 @@ const loginUser = async ({ email, password }) => {
     `,
     [user.id]
   );
+  
+  // Log successful login
+  await logLogin({
+    userId: user.id,
+    success: true,
+    ipAddress,
+    userAgent,
+  });
+  
+  await logAudit({
+    organizationId: user.organization_id,
+    userId: user.id,
+    action: 'login',
+    ipAddress,
+    userAgent,
+  });
+  
   return {
     token,
     user: {
@@ -260,6 +321,27 @@ const acceptInvitation = async ({ token, name, password }) => {
       [invitation.id]
     );
     await client.query("COMMIT");
+    
+    // Send welcome email
+    const orgResult = await pool.query(
+      'SELECT name FROM organizations WHERE id = $1',
+      [user.organization_id]
+    );
+    const organizationName = orgResult.rows[0]?.name || 'CRM Portal';
+    
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        userName: user.name,
+        organizationName,
+        organizationId: user.organization_id,
+        userId: user.id,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail account creation if email fails
+    }
+    
     const jwtToken = jwt.sign(
       {
         userId: user.id,

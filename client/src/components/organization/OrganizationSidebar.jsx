@@ -1,42 +1,20 @@
 import {
-  LayoutDashboard,
-  Users,
-  Mail,
-  Settings,
-  UserCircle,
-  LogOut,
+  LayoutDashboard, Users, Mail, Settings, UserCircle, LogOut, Shield, Webhook, Sliders,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
 function OrganizationSidebar() {
   const { user, logout } = useAuth();
   const navigation = [
-    {
-      name: "Dashboard",
-      path: "/organization",
-      icon: LayoutDashboard,
-      end: true,
-    },
-    {
-      name: "Employees",
-      path: "/organization/employees",
-      icon: Users,
-    },
-    {
-      name: "Invitations",
-      path: "/organization/invitations",
-      icon: Mail,
-    },
-    {
-      name: "Organization Settings",
-      path: "/organization/settings",
-      icon: Settings,
-    },
-    {
-      name: "Profile",
-      path: "/organization/profile",
-      icon: UserCircle,
-    },
+    { name: "Dashboard", path: "/organization", icon: LayoutDashboard, end: true },
+    { name: "Employees", path: "/organization/employees", icon: Users },
+    { name: "Invitations", path: "/organization/invitations", icon: Mail },
+    { name: "Organization Settings", path: "/organization/settings", icon: Settings },
+    { name: "Profile", path: "/organization/profile", icon: UserCircle },
+    { name: "Audit Logs", path: "/organization/audit-logs", icon: Shield },
+    { name: "Webhooks & API", path: "/organization/webhooks", icon: Webhook },
+    { name: "Custom Fields", path: "/organization/custom-fields", icon: Sliders },
   ];
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 min-h-screen flex flex-col">

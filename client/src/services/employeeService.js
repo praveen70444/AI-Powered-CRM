@@ -1,4 +1,6 @@
 import api from "./api";
+
+// ── PROFILE ─────────────────────────────────────────────────────
 export const getEmployeeProfile = async () => {
   const response = await api.get("/employee/profile");
   return response.data;
@@ -7,10 +9,22 @@ export const updateEmployeeProfile = async (payload) => {
   const response = await api.put("/employee/profile", payload);
   return response.data;
 };
+export const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const response = await api.post("/files/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+// ── DASHBOARD ────────────────────────────────────────────────────
 export const getEmployeeDashboard = async () => {
   const response = await api.get("/employee/dashboard");
   return response.data;
 };
+
+// ── LEADS ────────────────────────────────────────────────────────
 export const getLeads = async () => {
   const response = await api.get("/employee/leads");
   return response.data;
@@ -27,6 +41,15 @@ export const deleteLead = async (id) => {
   const response = await api.delete(`/employee/leads/${id}`);
   return response.data;
 };
+export const convertLead = async (id, options = {}) => {
+  const response = await api.post(`/employee/leads/${id}/convert`, options);
+  return response.data;
+};
+export const exportLeads = (format = "csv") => {
+  window.open(`${api.defaults.baseURL}/employee/export/leads?format=${format}`, "_blank");
+};
+
+// ── CUSTOMERS ────────────────────────────────────────────────────
 export const getCustomers = async () => {
   const response = await api.get("/employee/customers");
   return response.data;
@@ -43,6 +66,11 @@ export const deleteCustomer = async (id) => {
   const response = await api.delete(`/employee/customers/${id}`);
   return response.data;
 };
+export const exportCustomers = (format = "csv") => {
+  window.open(`${api.defaults.baseURL}/employee/export/customers?format=${format}`, "_blank");
+};
+
+// ── DEALS ────────────────────────────────────────────────────────
 export const getDeals = async () => {
   const response = await api.get("/employee/deals");
   return response.data;
@@ -59,6 +87,11 @@ export const deleteDeal = async (id) => {
   const response = await api.delete(`/employee/deals/${id}`);
   return response.data;
 };
+export const exportDeals = (format = "csv") => {
+  window.open(`${api.defaults.baseURL}/employee/export/deals?format=${format}`, "_blank");
+};
+
+// ── TASKS ────────────────────────────────────────────────────────
 export const getTasks = async () => {
   const response = await api.get("/employee/tasks");
   return response.data;
@@ -75,6 +108,11 @@ export const deleteTask = async (id) => {
   const response = await api.delete(`/employee/tasks/${id}`);
   return response.data;
 };
+export const exportTasks = (format = "csv") => {
+  window.open(`${api.defaults.baseURL}/employee/export/tasks?format=${format}`, "_blank");
+};
+
+// ── ACTIVITIES ───────────────────────────────────────────────────
 export const getActivities = async () => {
   const response = await api.get("/employee/activities");
   return response.data;
@@ -83,6 +121,8 @@ export const createActivity = async (payload) => {
   const response = await api.post("/employee/activities", payload);
   return response.data;
 };
+
+// ── NOTES ────────────────────────────────────────────────────────
 export const getNotes = async () => {
   const response = await api.get("/employee/notes");
   return response.data;
@@ -95,6 +135,8 @@ export const deleteNote = async (id) => {
   const response = await api.delete(`/employee/notes/${id}`);
   return response.data;
 };
+
+// ── NOTIFICATIONS ────────────────────────────────────────────────
 export const getNotifications = async () => {
   const response = await api.get("/employee/notifications");
   return response.data;
@@ -105,5 +147,25 @@ export const markNotificationRead = async (id) => {
 };
 export const markAllNotificationsRead = async () => {
   const response = await api.put("/employee/notifications/read-all");
+  return response.data;
+};
+
+// ── FILE ATTACHMENTS ─────────────────────────────────────────────
+export const uploadAttachment = async (file, relatedType, relatedId) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("relatedType", relatedType);
+  if (relatedId) formData.append("relatedId", relatedId);
+  const response = await api.post("/files/attachments", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+export const getAttachments = async (relatedType, relatedId) => {
+  const response = await api.get(`/files/attachments/${relatedType}/${relatedId}`);
+  return response.data;
+};
+export const deleteAttachment = async (id) => {
+  const response = await api.delete(`/files/attachments/${id}`);
   return response.data;
 };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Contact } from "lucide-react";
+import { Contact, AlertCircle } from "lucide-react";
 import ListToolbar from "../../components/employee/ListToolbar";
 import FilterSelect from "../../components/employee/FilterSelect";
 import StatusBadge from "../../components/employee/StatusBadge";
@@ -7,8 +7,11 @@ import RowActions from "../../components/employee/RowActions";
 import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
+import ExportMenu from "../../components/employee/ExportMenu";
+import TagsInput from "../../components/employee/TagsInput";
 import { CUSTOMER_STATUSES } from "../../mock/customers";
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from "../../services/employeeService";
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer, exportCustomers } from "../../services/employeeService";
+import api from "../../services/api";
 const PAGE_SIZE = 6;
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -21,6 +24,7 @@ function Customers() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeCustomer, setActiveCustomer] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dupWarning, setDupWarning] = useState("");
   useEffect(() => {
     let isMounted = true;
     async function loadCustomers() {
@@ -56,11 +60,25 @@ function Customers() {
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   function openAddModal() {
     setActiveCustomer(null);
+    setDupWarning("");
     setModalOpen(true);
   }
   function openEditModal(customer) {
     setActiveCustomer(customer);
+    setDupWarning("");
     setModalOpen(true);
+  }
+  async function checkDuplicate(email, phone) {
+    if (!email && !phone) return;
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append("email", email);
+      if (phone) params.append("phone", phone);
+      if (activeCustomer) params.append("excludeId", activeCustomer.id);
+      const res = await api.get(`/employee/customers/check-duplicate?${params}`);
+      const dupes = res.data?.data?.duplicates || [];
+      setDupWarning(dupes.length > 0 ? `⚠️ Similar customer exists: ${dupes[0].name} (${dupes[0].email})` : "");
+    } catch { /* silent */ }
   }
   async function handleSave(e) {
     e.preventDefault();
@@ -106,6 +124,9 @@ function Customers() {
   }
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-end px-6 pt-4 gap-2">
+        <ExportMenu onExport={exportCustomers} />
+      </div>
       <ListToolbar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
@@ -187,6 +208,11 @@ function Customers() {
         }
       >
         <form id="customer-form" onSubmit={handleSave} className="space-y-4">
+          {dupWarning && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+              <AlertCircle size={15} className="shrink-0" />{dupWarning}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Full Name</label>
@@ -200,11 +226,15 @@ function Customers() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Email</label>
-              <input type="email" name="email" defaultValue={activeCustomer?.email} required className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+              <input type="email" name="email" defaultValue={activeCustomer?.email} required
+                onBlur={e => checkDuplicate(e.target.value, document.querySelector('[name="phone"]')?.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Phone</label>
-              <input name="phone" defaultValue={activeCustomer?.phone} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+              <input name="phone" defaultValue={activeCustomer?.phone}
+                onBlur={e => checkDuplicate(document.querySelector('[name="email"]')?.value, e.target.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -223,6 +253,12 @@ function Customers() {
             <label className="text-xs font-medium text-gray-500">Total Spend (₹)</label>
             <input type="number" name="totalSpend" defaultValue={activeCustomer?.totalSpend} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
           </div>
+          {activeCustomer && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Tags</label>
+              <TagsInput entityType="customer" entityId={activeCustomer.id} />
+            </div>
+          )}
         </form>
       </Modal>
       <Modal

@@ -16,19 +16,29 @@ const mapLead = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
-const getLeads = async (organizationId, ownerId) => {
-  const result = await pool.query(
-    `
-    SELECT l.*, u.name AS owner_name
-    FROM leads l
-    JOIN users u ON u.id = l.owner_id
-    WHERE l.organization_id = $1
-      AND l.owner_id = $2
-    ORDER BY l.created_at DESC
-    `,
-    [organizationId, ownerId]
-  );
-  return result.rows.map(mapLead);
+const getLeads = async (organizationId, ownerId, { page = 1, limit = 50, search = '', status = '', source = '' } = {}) => {
+  const offset = (page - 1) * limit;
+  const conditions = ['l.organization_id = $1', 'l.owner_id = $2'];
+  const params = [organizationId, ownerId];
+  let idx = 3;
+
+  if (search) {
+    conditions.push(`(l.search_vector @@ plainto_tsquery('english', $${idx}) OR l.name ILIKE $${idx + 1} OR l.company ILIKE $${idx + 1} OR l.email ILIKE $${idx + 1})`);
+    params.push(search, `%${search}%`);
+    idx += 2;
+  }
+  if (status) { conditions.push(`l.status = $${idx}`); params.push(status); idx++; }
+  if (source) { conditions.push(`l.source = $${idx}`); params.push(source); idx++; }
+
+  const where = conditions.join(' AND ');
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(`SELECT l.*, u.name AS owner_name FROM leads l JOIN users u ON u.id = l.owner_id WHERE ${where} ORDER BY l.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, [...params, limit, offset]),
+    pool.query(`SELECT COUNT(*) FROM leads l WHERE ${where}`, params),
+  ]);
+  return {
+    data: dataRes.rows.map(mapLead),
+    pagination: { page, limit, total: parseInt(countRes.rows[0].count), totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit) },
+  };
 };
 const getLeadById = async (id, organizationId, ownerId) => {
   const result = await pool.query(
@@ -173,6 +183,22 @@ const deleteLead = async (id, organizationId, ownerId) => {
   }
   return { id };
 };
+
+const getAllLeads = async (organizationId, ownerId) => {
+  const result = await pool.query(
+    `
+    SELECT l.*, u.name AS owner_name
+    FROM leads l
+    JOIN users u ON u.id = l.owner_id
+    WHERE l.organization_id = $1
+      AND l.owner_id = $2
+    ORDER BY l.created_at DESC
+    `,
+    [organizationId, ownerId]
+  );
+  return result.rows.map(mapLead);
+};
+
 module.exports = {
   LEAD_STATUSES,
   LEAD_SOURCES,
@@ -181,4 +207,5 @@ module.exports = {
   createLead,
   updateLead,
   deleteLead,
+  getAllLeads,
 };

@@ -1,36 +1,31 @@
 import api from "./api";
-const registerOrganization = async (organizationData) => {
-  const response = await api.post(
-    "/auth/register-organization",
-    organizationData
-  );
+
+export const login = async (email, password) => {
+  const response = await api.post("/auth/login", { email, password });
   return response.data;
 };
-const loginUser = async (loginData) => {
-  const response = await api.post("/auth/login", loginData);
+
+export const register = async (payload) => {
+  const response = await api.post("/auth/register", payload);
   return response.data;
 };
-const getCurrentUser = async () => {
-  const response = await api.get("/auth/me");
+
+export const requestPasswordReset = async (email) => {
+  const response = await api.post("/password/request-reset", { email });
   return response.data;
 };
-const getInvitation = async (token) => {
-  const response = await api.get(`/auth/invitation/${token}`);
+
+export const verifyResetToken = async (token) => {
+  const response = await api.get(`/password/verify-token/${token}`);
   return response.data;
 };
-const acceptInvitation = async ({ token, name, password }) => {
-  const response = await api.post("/auth/accept-invitation", {
-    token,
-    name,
-    password,
-  });
+
+export const resetPassword = async (token, password) => {
+  const response = await api.post(`/password/reset/${token}`, { password });
   return response.data;
 };
-const authService = {
-  registerOrganization,
-  loginUser,
-  getCurrentUser,
-  getInvitation,
-  acceptInvitation,
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await api.post("/password/change", { currentPassword, newPassword });
+  return response.data;
 };
-export default authService;
