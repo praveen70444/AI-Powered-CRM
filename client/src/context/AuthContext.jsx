@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await loginRequest(email, password);
-      const { token, user } = response;
+      const { token, user } = response.data;
       localStorage.setItem("admin_token", token);
       localStorage.setItem("user", JSON.stringify(user));
       setToken(token);
