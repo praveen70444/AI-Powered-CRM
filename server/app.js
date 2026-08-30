@@ -21,7 +21,6 @@ const app = express();
 
 // CORS — must be first, before all other middleware
 app.use(cors(corsOptions));
-app.options("/(.*)", cors(corsOptions)); // handle preflight for all routes
 
 // Security middleware
 app.use(helmetConfig);
