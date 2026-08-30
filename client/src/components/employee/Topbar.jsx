@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Menu, Bell, ChevronDown, LogOut, UserCircle } from "lucide-react";
+import { Menu, Bell, ChevronDown, LogOut, UserCircle, Sparkles } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getNotifications } from "../../services/employeeService";
 import GlobalSearch from "./GlobalSearch";
+import AISearchPanel from "../ai/AISearchPanel";
 const TITLES = {
   "/employee": "Dashboard",
   "/employee/leads": "Leads",
@@ -24,6 +25,7 @@ function Topbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [aiSearchOpen, setAiSearchOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
     let isMounted = true;
@@ -74,6 +76,14 @@ function Topbar({ onMenuClick }) {
       </div>
       <div className="flex items-center gap-2">
         <button
+          onClick={() => setAiSearchOpen(true)}
+          className="hidden sm:flex h-9 px-3 items-center gap-2 rounded-lg text-violet-600 hover:bg-violet-50 transition-colors border border-violet-200"
+          title="AI Search"
+        >
+          <Sparkles size={16} />
+          <span className="text-sm font-medium">AI Search</span>
+        </button>
+        <button
           onClick={() => navigate("/employee/notifications")}
           className="relative h-9 w-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
         >
@@ -109,6 +119,9 @@ function Topbar({ onMenuClick }) {
           )}
         </div>
       </div>
+
+      {/* AI Search Modal */}
+      {aiSearchOpen && <AISearchPanel onClose={() => setAiSearchOpen(false)} />}
     </header>
   );
 }

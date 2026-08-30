@@ -3,9 +3,12 @@ import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard, Users, Contact, KanbanSquare, ListChecks, History,
   StickyNote, Bell, UserCircle, LogOut, X, CalendarDays, TrendingUp, Package, FileText,
+  Sparkles,
 } from "lucide-react";
+
 const NAV_ITEMS = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/employee/ai", label: "AI Insights", icon: Sparkles },
   { to: "/employee/leads", label: "Leads", icon: Users },
   { to: "/employee/customers", label: "Customers", icon: Contact },
   { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
@@ -57,7 +60,11 @@ function Sidebar({ open, onClose }) {
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                  item.label === "AI Insights"
+                    ? isActive
+                      ? "bg-violet-100 text-violet-700"
+                      : "text-violet-600 hover:bg-violet-50"
+                    : isActive
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`
@@ -65,6 +72,9 @@ function Sidebar({ open, onClose }) {
             >
               <item.icon size={18} />
               {item.label}
+              {item.label === "AI Insights" && (
+                <span className="ml-auto text-[10px] font-semibold bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full">AI</span>
+              )}
             </NavLink>
           ))}
         </nav>

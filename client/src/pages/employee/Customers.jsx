@@ -9,8 +9,11 @@ import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import ExportMenu from "../../components/employee/ExportMenu";
 import TagsInput from "../../components/employee/TagsInput";
+import ChurnRiskBadge from "../../components/ai/ChurnRiskBadge";
+import NextActionBanner from "../../components/ai/NextActionBanner";
 import { CUSTOMER_STATUSES } from "../../mock/customers";
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer, exportCustomers } from "../../services/employeeService";
+import { getChurnRisk, getCustomerNextAction } from "../../services/aiService";
 import api from "../../services/api";
 const PAGE_SIZE = 6;
 function Customers() {
@@ -25,6 +28,23 @@ function Customers() {
   const [activeCustomer, setActiveCustomer] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [dupWarning, setDupWarning] = useState("");
+  const [analyzingChurn, setAnalyzingChurn] = useState(false);
+
+  // Run churn analysis and merge risk back into local state
+  const runChurnAnalysis = async () => {
+    setAnalyzingChurn(true);
+    try {
+      const res = await getChurnRisk();
+      const riskMap = {};
+      (res.data?.all || []).forEach((r) => {
+        riskMap[r.customerId] = r.churnRisk;
+      });
+      setCustomers((prev) =>
+        prev.map((c) => (riskMap[c.id] !== undefined ? { ...c, ai_churn_risk: riskMap[c.id] } : c))
+      );
+    } catch { /* silent */ }
+    finally { setAnalyzingChurn(false); }
+  };
   useEffect(() => {
     let isMounted = true;
     async function loadCustomers() {
@@ -125,6 +145,13 @@ function Customers() {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       <div className="flex items-center justify-end px-6 pt-4 gap-2">
+        <button
+          onClick={runChurnAnalysis}
+          disabled={analyzingChurn || loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 disabled:opacity-50 transition-colors"
+        >
+          {analyzingChurn ? "Analyzing…" : "✨ Churn Analysis"}
+        </button>
         <ExportMenu onExport={exportCustomers} />
       </div>
       <ListToolbar
@@ -161,6 +188,7 @@ function Customers() {
                 <th className="px-6 py-3 font-medium">Company</th>
                 <th className="px-6 py-3 font-medium">Industry</th>
                 <th className="px-6 py-3 font-medium">Status</th>
+                <th className="px-6 py-3 font-medium">Churn Risk</th>
                 <th className="px-6 py-3 font-medium">Total Spend</th>
                 <th className="px-6 py-3 font-medium">Customer Since</th>
                 <th className="px-6 py-3 font-medium"></th>
@@ -176,6 +204,9 @@ function Customers() {
                   <td className="px-6 py-4 text-gray-600">{customer.company}</td>
                   <td className="px-6 py-4 text-gray-600">{customer.industry}</td>
                   <td className="px-6 py-4"><StatusBadge value={customer.status} /></td>
+                  <td className="px-6 py-4">
+                    <ChurnRiskBadge risk={customer.ai_churn_risk} />
+                  </td>
                   <td className="px-6 py-4 text-gray-600">₹{customer.totalSpend.toLocaleString("en-IN")}</td>
                   <td className="px-6 py-4 text-gray-600">{customer.since}</td>
                   <td className="px-6 py-4">
@@ -258,6 +289,12 @@ function Customers() {
               <label className="text-xs font-medium text-gray-500 mb-1.5 block">Tags</label>
               <TagsInput entityType="customer" entityId={activeCustomer.id} />
             </div>
+          )}
+          {activeCustomer && (
+            <NextActionBanner
+              fetchFn={() => getCustomerNextAction(activeCustomer.id)}
+              entityId={activeCustomer.id}
+            />
           )}
         </form>
       </Modal>

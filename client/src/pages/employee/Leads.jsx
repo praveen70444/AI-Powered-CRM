@@ -10,8 +10,12 @@ import Modal from "../../components/employee/Modal";
 import ExportMenu from "../../components/employee/ExportMenu";
 import ConvertLeadModal from "../../components/employee/ConvertLeadModal";
 import TagsInput from "../../components/employee/TagsInput";
+import LeadScoreBadge from "../../components/ai/LeadScoreBadge";
+import NextActionBanner from "../../components/ai/NextActionBanner";
+import AIEmailComposer from "../../components/ai/AIEmailComposer";
 import { LEAD_STATUSES, LEAD_SOURCES } from "../../mock/leads";
 import { getLeads, createLead, updateLead, deleteLead, exportLeads } from "../../services/employeeService";
+import { scoreAllLeads, getLeadNextAction } from "../../services/aiService";
 import api from "../../services/api";
 const PAGE_SIZE = 6;
 function Leads() {
@@ -27,8 +31,25 @@ function Leads() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeLead, setActiveLead] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  // ponytail: simple state for duplicate warning — no abstraction needed
   const [dupWarning, setDupWarning] = useState("");
+  const [scoringAll, setScoringAll] = useState(false);
+  const [emailComposerOpen, setEmailComposerOpen] = useState(false);
+
+  // Re-score leads and merge AI fields back into state
+  const runScoreAll = async () => {
+    setScoringAll(true);
+    try {
+      const res = await scoreAllLeads();
+      const scoreMap = {};
+      (res.data?.results || []).forEach((r) => {
+        scoreMap[r.leadId] = { ai_score: r.score, ai_score_label: r.label };
+      });
+      setLeads((prev) =>
+        prev.map((l) => (scoreMap[l.id] ? { ...l, ...scoreMap[l.id] } : l))
+      );
+    } catch { /* silent */ }
+    finally { setScoringAll(false); }
+  };
   useEffect(() => {
     let isMounted = true;
     async function loadLeads() {
@@ -130,6 +151,13 @@ function Leads() {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       <div className="flex items-center justify-end px-6 pt-4 gap-2">
+        <button
+          onClick={runScoreAll}
+          disabled={scoringAll || loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 disabled:opacity-50 transition-colors"
+        >
+          {scoringAll ? "Scoring…" : "✨ Score All Leads"}
+        </button>
         <ExportMenu onExport={exportLeads} />
       </div>
       <ListToolbar
@@ -170,6 +198,7 @@ function Leads() {
                 <th className="px-6 py-3 font-medium">Status</th>
                 <th className="px-6 py-3 font-medium">Source</th>
                 <th className="px-6 py-3 font-medium">Value</th>
+                <th className="px-6 py-3 font-medium">AI Score</th>
                 <th className="px-6 py-3 font-medium">Owner</th>
                 <th className="px-6 py-3 font-medium"></th>
               </tr>
@@ -185,6 +214,9 @@ function Leads() {
                   <td className="px-6 py-4"><StatusBadge value={lead.status} /></td>
                   <td className="px-6 py-4 text-gray-600">{lead.source}</td>
                   <td className="px-6 py-4 text-gray-600">₹{lead.value.toLocaleString("en-IN")}</td>
+                  <td className="px-6 py-4">
+                    <LeadScoreBadge score={lead.ai_score} label={lead.ai_score_label} />
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{lead.owner}</td>
                   <td className="px-6 py-4">
                     <RowActions
@@ -272,6 +304,22 @@ function Leads() {
               <TagsInput entityType="lead" entityId={activeLead.id} />
             </div>
           )}
+          {activeLead && (
+            <NextActionBanner
+              fetchFn={() => getLeadNextAction(activeLead.id)}
+              entityId={activeLead.id}
+            />
+          )}
+          {activeLead && (
+            <button
+              type="button"
+              onClick={() => setEmailComposerOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all font-medium"
+            >
+              <span className="text-lg">✨</span>
+              Compose AI Email
+            </button>
+          )}
         </form>
       </Modal>
       <Modal
@@ -307,6 +355,16 @@ function Leads() {
           setConvertTarget(null);
         }}
       />
+
+      {/* AI Email Composer */}
+      {emailComposerOpen && activeLead && (
+        <AIEmailComposer
+          entityType="lead"
+          entityId={activeLead.id}
+          entityName={activeLead.name}
+          onClose={() => setEmailComposerOpen(false)}
+        />
+      )}
     </div>
   );
 }

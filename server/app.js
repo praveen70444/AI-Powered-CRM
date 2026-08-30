@@ -8,6 +8,7 @@ const organizationRoutes = require("./routes/organizationRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const passwordRoutes = require("./routes/passwordRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const authenticate = require("./middleware/authMiddleware");
 const {
   helmetConfig,
@@ -17,6 +18,13 @@ const {
 } = require("./middleware/securityMiddleware");
 
 const app = express();
+
+
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 
 // Security middleware
 app.use(helmetConfig);
@@ -31,6 +39,16 @@ app.use("/api/files", express.static(path.join(__dirname, "uploads")));
 
 // Rate limiting on all API routes
 app.use("/api", generalLimiter);
+
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "AI-Powered CRM API is running"
+  });
+});
+
+
+
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -51,6 +69,9 @@ app.get("/api/auth/me", authenticate, (req, res) => {
   });
 });
 
+
+
+
 // Password management (public endpoints)
 app.use("/api/password", passwordRoutes);
 
@@ -62,6 +83,9 @@ app.use("/api/organization", organizationRoutes);
 
 // Employee CRM routes
 app.use("/api/employee", employeeRoutes);
+
+// AI routes (employee-scoped)
+app.use("/api/ai", aiRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

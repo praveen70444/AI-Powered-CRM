@@ -4,6 +4,7 @@ import StatCard from "../../components/employee/StatCard";
 import BarChart from "../../components/employee/BarChart";
 import DonutChart from "../../components/employee/DonutChart";
 import StatusBadge from "../../components/employee/StatusBadge";
+import AIBriefingCard from "../../components/ai/AIBriefingCard";
 import { getEmployeeDashboard } from "../../services/employeeService";
 function formatCurrency(value) {
   return `₹${(value / 100000).toFixed(1)}L`;
@@ -63,6 +64,9 @@ function DashboardHome() {
   const recentActivities = dashboard?.recentActivities || [];
   return (
     <div className="space-y-6">
+      {/* AI Briefing */}
+      <AIBriefingCard />
+
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <StatCard icon={Users} label="Total Leads" value={summary.totalLeads} accent="blue" />
         <StatCard icon={UserPlus} label="New Leads" value={summary.newLeads} accent="violet" />

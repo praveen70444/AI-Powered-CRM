@@ -3,8 +3,11 @@ import { Plus, CalendarDays, User } from "lucide-react";
 import Modal from "../../components/employee/Modal";
 import ExportMenu from "../../components/employee/ExportMenu";
 import TagsInput from "../../components/employee/TagsInput";
+import DealHealthBadge from "../../components/ai/DealHealthBadge";
+import NextActionBanner from "../../components/ai/NextActionBanner";
 import { DEAL_STAGES } from "../../mock/deals";
 import { getDeals, createDeal, updateDeal, exportDeals } from "../../services/employeeService";
+import { getDealHealthSummary, getDealNextAction } from "../../services/aiService";
 const STAGE_STYLES = {
   New: "border-t-blue-500",
   Qualified: "border-t-sky-500",
@@ -24,6 +27,19 @@ function Deals() {
   const [modalOpen, setModalOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [viewDeal, setViewDeal] = useState(null);
+  const [scoringDeals, setScoringDeals] = useState(false);
+
+  // Score all active deals and merge health data back into state
+  const runDealHealth = async () => {
+    setScoringDeals(true);
+    try {
+      const res = await getDealHealthSummary();
+      // Re-fetch deals to get updated AI health columns
+      const refreshed = await getDeals();
+      setDeals(refreshed.data);
+    } catch { /* silent */ }
+    finally { setScoringDeals(false); }
+  };
   useEffect(() => {
     let isMounted = true;
     async function loadDeals() {
@@ -94,6 +110,13 @@ function Deals() {
           {deals.length} deals · Total pipeline value {formatValue(deals.reduce((s, d) => s + d.value, 0))}
         </p>
         <div className="flex items-center gap-2">
+          <button
+            onClick={runDealHealth}
+            disabled={scoringDeals || loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 disabled:opacity-50 transition-colors"
+          >
+            {scoringDeals ? "Analyzing…" : "✨ Deal Health"}
+          </button>
           <ExportMenu onExport={exportDeals} />
           <button
             onClick={() => setModalOpen(true)}
@@ -136,6 +159,17 @@ function Deals() {
                     <p className="text-sm font-medium text-gray-900">{deal.title}</p>
                     <p className="text-xs text-gray-400 mt-1">{deal.company}</p>
                     <p className="text-sm font-semibold text-blue-600 mt-3">{formatValue(deal.value)}</p>
+                    {/* AI health badge */}
+                    {deal.ai_health_score != null && (
+                      <div className="mt-2">
+                        <DealHealthBadge
+                          score={deal.ai_health_score}
+                          label={deal.ai_health_label}
+                          riskFlags={deal.ai_risk_flags || []}
+                          showFlags
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
                       <span className="flex items-center gap-1">
                         <User size={12} /> {deal.owner?.split(" ")[0]}
@@ -214,6 +248,23 @@ function Deals() {
               <div><span className="text-gray-400">Value:</span> <span className="font-semibold text-blue-600">{formatValue(viewDeal.value)}</span></div>
               <div><span className="text-gray-400">Close:</span> <span>{viewDeal.closeDate || "—"}</span></div>
             </div>
+            {/* AI health summary */}
+            {viewDeal.ai_health_score != null && (
+              <div>
+                <span className="text-xs font-medium text-gray-500 block mb-1.5">Deal Health</span>
+                <DealHealthBadge
+                  score={viewDeal.ai_health_score}
+                  label={viewDeal.ai_health_label}
+                  riskFlags={viewDeal.ai_risk_flags || []}
+                  showFlags
+                />
+              </div>
+            )}
+            {/* AI next action */}
+            <NextActionBanner
+              fetchFn={() => getDealNextAction(viewDeal.id)}
+              entityId={viewDeal.id}
+            />
             <div>
               <span className="text-xs font-medium text-gray-500 block mb-1.5">Tags</span>
               <TagsInput entityType="deal" entityId={viewDeal.id} />

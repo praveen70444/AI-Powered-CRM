@@ -27,6 +27,7 @@ const {
 const {
   getCustomFields, createCustomField, updateCustomField, deleteCustomField,
 } = require("../controllers/customFieldController");
+const { getAISettings, updateAISettings } = require("../controllers/aiSettingsController");
 
 const router = express.Router();
 
@@ -86,5 +87,9 @@ router.delete("/webhooks/:id", deleteWebhook);
 router.get("/api-keys", getApiKeys);
 router.post("/api-keys", createApiKey);
 router.delete("/api-keys/:id", revokeApiKey);
+
+// AI Settings
+router.get("/ai-settings", getAISettings);
+router.put("/ai-settings", updateAISettings);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, Mail, Settings, UserCircle, LogOut, Shield, Webhook, Sliders,
+  LayoutDashboard, Users, Mail, Settings, UserCircle, LogOut, Shield, Webhook, Sliders, Sparkles,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +15,7 @@ function OrganizationSidebar() {
     { name: "Audit Logs", path: "/organization/audit-logs", icon: Shield },
     { name: "Webhooks & API", path: "/organization/webhooks", icon: Webhook },
     { name: "Custom Fields", path: "/organization/custom-fields", icon: Sliders },
+    { name: "AI Settings", path: "/organization/ai-settings", icon: Sparkles, ai: true },
   ];
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 min-h-screen flex flex-col">
