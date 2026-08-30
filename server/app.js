@@ -19,10 +19,12 @@ const {
 
 const app = express();
 
+// CORS — must be first, before all other middleware
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // handle preflight for all routes
+
 // Security middleware
 app.use(helmetConfig);
-app.use(compression());
-app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(sanitizeInput);

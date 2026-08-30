@@ -88,26 +88,15 @@ const sanitizeInput = (req, res, next) => {
 };
 
 /**
- * CORS configuration
+ * CORS configuration — allow all origins
+ * To restrict later, replace '*' with specific domains
  */
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-].filter(Boolean); // remove any undefined/empty values
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    }
-  },
+  origin: true,   // reflects the request origin — works for all domains
   credentials: true,
   optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 module.exports = {
