@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import authService from "../services/authService";
+import { login as loginRequest } from "../services/authService";
 const AuthContext = createContext(null);
 const EMPLOYEE_ROLES = ["SALES_MANAGER", "SALES_EXECUTIVE", "SUPPORT_AGENT"];
 const storedUser = (() => {
@@ -19,11 +19,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await authService.loginUser({
-        email,
-        password,
-      });
-      const { token, user } = response.data;
+      const response = await loginRequest(email, password);
+      const { token, user } = response;
       localStorage.setItem("admin_token", token);
       localStorage.setItem("user", JSON.stringify(user));
       setToken(token);

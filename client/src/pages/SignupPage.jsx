@@ -1,5 +1,5 @@
 import { useState } from "react";
-import authService from "../services/authService";
+import { register } from "../services/authService";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Building2,
@@ -33,7 +33,7 @@ function SignupPage() {
     setSuccess("");
     setLoading(true);
     try {
-      await authService.registerOrganization(formData);
+      await register(formData);
       setSuccess(
         "Organization created successfully. Redirecting to login..."
       );

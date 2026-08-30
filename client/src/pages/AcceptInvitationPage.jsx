@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import authService from "../services/authService";
+import { getInvitation, acceptInvitation } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import {
   Building2,
@@ -35,7 +35,7 @@ function AcceptInvitationPage() {
         return;
       }
       try {
-        const response = await authService.getInvitation(token);
+        const response = await getInvitation(token);
         if (!isMounted) return;
         setInvitation(response.data);
       } catch (err) {
@@ -72,7 +72,7 @@ function AcceptInvitationPage() {
     }
     setSubmitting(true);
     try {
-      await authService.acceptInvitation({
+      await acceptInvitation({
         token,
         name: formData.name,
         password: formData.password,

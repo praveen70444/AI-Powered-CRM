@@ -29,3 +29,13 @@ export const changePassword = async (currentPassword, newPassword) => {
   const response = await api.post("/password/change", { currentPassword, newPassword });
   return response.data;
 };
+
+export const getInvitation = async (token) => {
+  const response = await api.get(`/auth/invitation/${token}`);
+  return response.data;
+};
+
+export const acceptInvitation = async (payload) => {
+  const response = await api.post("/auth/accept-invitation", payload);
+  return response.data;
+};
