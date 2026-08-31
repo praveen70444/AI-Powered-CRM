@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getNotifications } from "../../services/employeeService";
 import GlobalSearch from "./GlobalSearch";
 import AISearchPanel from "../ai/AISearchPanel";
+
 const TITLES = {
   "/employee": "Dashboard",
   "/employee/leads": "Leads",
@@ -18,7 +19,10 @@ const TITLES = {
   "/employee/calendar": "Calendar",
   "/employee/analytics": "Analytics",
   "/employee/products": "Products",
+  "/employee/quotes": "Quotes",
+  "/employee/ai": "AI Insights",
 };
+
 function Topbar({ onMenuClick }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,6 +31,7 @@ function Topbar({ onMenuClick }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [aiSearchOpen, setAiSearchOpen] = useState(false);
   const ref = useRef(null);
+
   useEffect(() => {
     let isMounted = true;
     async function loadUnreadCount() {
@@ -34,95 +39,108 @@ function Topbar({ onMenuClick }) {
         const response = await getNotifications();
         if (!isMounted) return;
         setUnreadCount(response.data.filter((n) => !n.read).length);
-      } catch {
-        if (!isMounted) return;
-      }
+      } catch { if (!isMounted) return; }
     }
     loadUnreadCount();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [location.pathname]);
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
+
+  function handleLogout() { logout(); navigate("/login"); }
+
   useEffect(() => {
     function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setProfileOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   const title = TITLES[location.pathname] || "Dashboard";
-  const initials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("")
-    : "";
+  const initials = user?.name ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "U";
+
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 gap-4">
+    <header className="h-16 bg-[var(--color-bg-card)] border-b border-[var(--color-border)] flex items-center justify-between px-4 lg:px-5 gap-4 flex-shrink-0">
+      {/* Left */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden h-9 w-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+          className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl text-[var(--color-body-text)] hover:bg-slate-100 transition-colors"
         >
-          <Menu size={20} />
+          <Menu size={19} />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+        <h1 className="text-base font-bold text-[var(--color-heading)]">{title}</h1>
       </div>
-      <div className="hidden md:flex relative flex-1 max-w-md">
+
+      {/* Centre search */}
+      <div className="hidden md:flex flex-1 max-w-md">
         <GlobalSearch />
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* Right actions */}
+      <div className="flex items-center gap-1.5">
+        {/* AI Search */}
         <button
           onClick={() => setAiSearchOpen(true)}
-          className="hidden sm:flex h-9 px-3 items-center gap-2 rounded-lg text-violet-600 hover:bg-violet-50 transition-colors border border-violet-200"
-          title="AI Search"
+          className="hidden sm:flex h-8 px-3 items-center gap-1.5 rounded-xl text-violet-600 hover:bg-violet-50 transition-colors border border-violet-200 text-xs font-semibold"
         >
-          <Sparkles size={16} />
-          <span className="text-sm font-medium">AI Search</span>
+          <Sparkles size={14} />
+          <span>AI</span>
         </button>
+
+        {/* Bell */}
         <button
           onClick={() => navigate("/employee/notifications")}
-          className="relative h-9 w-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          className="relative h-9 w-9 flex items-center justify-center rounded-xl text-[var(--color-body-text)] hover:bg-slate-100 transition-colors"
         >
-          <Bell size={19} />
+          <Bell size={18} />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-red-500" />
           )}
         </button>
+
+        {/* Divider */}
+        <div className="h-6 w-px bg-[var(--color-border)] mx-0.5" />
+
+        {/* Profile */}
         <div className="relative" ref={ref}>
           <button
             onClick={() => setProfileOpen((o) => !o)}
-            className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-xl hover:bg-slate-100 transition-colors"
           >
-            <div className="h-8 w-8 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center">
-              {initials || <UserCircle size={18} />}
+            <div className="h-7 w-7 rounded-full bg-[var(--color-sidebar-active)] text-white text-[11px] font-bold flex items-center justify-center">
+              {initials}
             </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700">{user?.name || "My Account"}</span>
-            <ChevronDown size={16} className="hidden sm:block text-gray-400" />
+            <span className="hidden sm:block text-xs font-semibold text-[var(--color-heading)] max-w-24 truncate">{user?.name || "Account"}</span>
+            <ChevronDown size={14} className="hidden sm:block text-[var(--color-body-text)]" />
           </button>
+
           {profileOpen && (
-            <div className="absolute right-0 top-11 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20">
-              <p className="px-3 py-2 text-xs text-gray-400 border-b border-gray-100">{user?.email || "No account data"}</p>
+            <div className="absolute right-0 top-11 w-52 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl shadow-xl py-1.5 z-50 animate-fade-in">
+              <div className="px-3 py-2 border-b border-[var(--color-border)] mb-1">
+                <p className="text-xs font-semibold text-[var(--color-heading)] truncate">{user?.name}</p>
+                <p className="text-[11px] text-[var(--color-body-text)] truncate">{user?.email}</p>
+              </div>
               <button
                 onClick={() => { setProfileOpen(false); navigate("/employee/profile"); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--color-body-text)] hover:bg-slate-50 transition-colors"
               >
-                <UserCircle size={15} /> My Account
+                <UserCircle size={15} /> My Profile
               </button>
-              <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                <LogOut size={15} /> Logout
+              <div className="border-t border-[var(--color-border)] my-1" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={15} /> Sign out
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* AI Search Modal */}
       {aiSearchOpen && <AISearchPanel onClose={() => setAiSearchOpen(false)} />}
     </header>
   );
 }
+
 export default Topbar;

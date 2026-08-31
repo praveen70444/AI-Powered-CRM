@@ -1,5 +1,5 @@
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { rateLimit, MemoryStore } = require('express-rate-limit');
 
 /**
  * Helmet security headers
@@ -22,47 +22,90 @@ const helmetConfig = helmet({
 
 /**
  * Rate limiter for general API requests
+ * 500 req/15min is generous enough for any normal usage including dev
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  max: 500,
+  store: new MemoryStore(),
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests. Please wait a moment and try again.',
+    });
+  },
 });
 
 /**
  * Rate limiter for authentication endpoints
  */
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login attempts per windowMs
-  message: 'Too many login attempts from this IP, please try again after 15 minutes.',
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  store: new MemoryStore(),
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Don't count successful logins
+  skipSuccessfulRequests: true,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many login attempts. Please wait 15 minutes and try again.',
+    });
+  },
 });
 
 /**
  * Rate limiter for password reset requests
  */
 const passwordResetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // Limit each IP to 3 password reset requests per hour
-  message: 'Too many password reset requests, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  store: new MemoryStore(),
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many password reset requests, please try again later.',
+    });
+  },
 });
 
 /**
  * Rate limiter for file uploads
  */
 const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Limit each IP to 20 uploads per hour
-  message: 'Too many upload attempts, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: 50,
+  store: new MemoryStore(),
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many upload attempts, please try again later.',
+    });
+  },
+});
+
+/**
+ * Rate limiter for AI endpoints (expensive OpenAI calls)
+ * 60 per 15 minutes — generous enough for testing
+ */
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  store: new MemoryStore(),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'AI request limit reached. Please wait a moment before generating again.',
+    });
+  },
 });
 
 /**
@@ -105,6 +148,7 @@ module.exports = {
   authLimiter,
   passwordResetLimiter,
   uploadLimiter,
+  aiLimiter,
   sanitizeInput,
   corsOptions,
 };

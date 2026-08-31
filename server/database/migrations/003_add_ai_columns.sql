@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   nl_search_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   daily_briefing_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   note_summarization_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  openai_api_key_encrypted TEXT,
   openai_api_key_set BOOLEAN NOT NULL DEFAULT FALSE,
   openai_model VARCHAR(100) NOT NULL DEFAULT 'gpt-4o-mini',
   monthly_token_limit INTEGER NOT NULL DEFAULT 100000,

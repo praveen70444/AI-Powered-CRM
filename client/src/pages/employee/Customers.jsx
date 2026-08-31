@@ -11,6 +11,7 @@ import ExportMenu from "../../components/employee/ExportMenu";
 import TagsInput from "../../components/employee/TagsInput";
 import ChurnRiskBadge from "../../components/ai/ChurnRiskBadge";
 import NextActionBanner from "../../components/ai/NextActionBanner";
+import AIEmailComposer from "../../components/ai/AIEmailComposer";
 import { CUSTOMER_STATUSES } from "../../mock/customers";
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer, exportCustomers } from "../../services/employeeService";
 import { getChurnRisk, getCustomerNextAction } from "../../services/aiService";
@@ -29,6 +30,7 @@ function Customers() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [dupWarning, setDupWarning] = useState("");
   const [analyzingChurn, setAnalyzingChurn] = useState(false);
+  const [emailComposerOpen, setEmailComposerOpen] = useState(false);
 
   // Run churn analysis and merge risk back into local state
   const runChurnAnalysis = async () => {
@@ -214,6 +216,9 @@ function Customers() {
                       onView={() => openEditModal(customer)}
                       onEdit={() => openEditModal(customer)}
                       onDelete={() => setDeleteTarget(customer)}
+                      extra={[
+                        { label: "✨ Compose Email", onClick: () => { setActiveCustomer(customer); setEmailComposerOpen(true); } },
+                      ]}
                     />
                   </td>
                 </tr>
@@ -317,6 +322,16 @@ function Customers() {
           Are you sure you want to delete <span className="font-medium text-gray-900">{deleteTarget?.name}</span>? This action cannot be undone.
         </p>
       </Modal>
+
+      {/* AI Email Composer */}
+      {emailComposerOpen && activeCustomer && (
+        <AIEmailComposer
+          entityType="customer"
+          entityId={activeCustomer.id}
+          entityName={activeCustomer.name}
+          onClose={() => setEmailComposerOpen(false)}
+        />
+      )}
     </div>
   );
 }

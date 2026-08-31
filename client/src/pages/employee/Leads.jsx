@@ -223,9 +223,10 @@ function Leads() {
                       onView={() => openEditModal(lead)}
                       onEdit={() => openEditModal(lead)}
                       onDelete={() => setDeleteTarget(lead)}
-                      extra={lead.status !== "Converted" ? [
-                        { label: "Convert to Customer", onClick: () => setConvertTarget(lead) }
-                      ] : []}
+                      extra={[
+                        { label: "✨ Compose Email", onClick: () => { setActiveLead(lead); setEmailComposerOpen(true); } },
+                        ...(lead.status !== "Converted" ? [{ label: "Convert to Customer", onClick: () => setConvertTarget(lead) }] : []),
+                      ]}
                     />
                   </td>
                 </tr>

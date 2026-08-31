@@ -1,1 +1,102 @@
 @import "tailwindcss";
+
+/* ── Reference UI Design Tokens ──────────────────────────────── */
+:root {
+  /* Sidebar */
+  --color-sidebar-bg:     #0F172A;
+  --color-sidebar-active: #2563EB;
+  --color-sidebar-text:   #CBD5E1;
+
+  /* Main dashboard */
+  --color-bg-main:        #F8FAFC;
+  --color-bg-card:        #FFFFFF;
+  --color-heading:        #0F172A;
+  --color-body-text:      #64748B;
+
+  /* Buttons */
+  --color-btn-primary:    #2563EB;
+  --color-btn-hover:      #1D4ED8;
+  --color-btn-secondary:  #EEF2FF;
+
+  /* CRM Status Colors */
+  --color-status-won:     #16A34A;
+  --color-status-progress:#2563EB;
+  --color-status-pending: #F59E0B;
+  --color-status-lost:    #DC2626;
+  --color-status-draft:   #64748B;
+
+  /* Additional utility colors */
+  --color-border:         #E2E8F0;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --shadow-modal: 0 20px 60px -10px rgb(0 0 0 / 0.18);
+}
+
+/* ── Base reset ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg-main);
+  color: var(--color-body-text);
+  line-height: 1.5;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-heading);
+}
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Selection ──────────────────────────────────── */
+::selection { background: #BFDBFE; color: #1E3A5F; }
+
+/* ── Focus ring ─────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-btn-primary);
+  outline-offset: 2px;
+}
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-fade-up  { animation: fade-up  0.5s ease both; }
+.animate-fade-in  { animation: fade-in  0.3s ease both; }
+.animate-float    { animation: float    4s ease-in-out infinite; }
+
+/* ── Gradient text helper ───────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-btn-primary) 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Card helper ──────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+}

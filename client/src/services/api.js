@@ -21,6 +21,10 @@ api.interceptors.response.use(
         window.location.href = "/login";
       }
       error.friendlyMessage = "Your session has expired. Please sign in again.";
+    } else if (status === 429) {
+      error.friendlyMessage =
+        error.response?.data?.message ||
+        "Too many attempts. Please wait a few minutes and try again.";
     } else if (status === 403) {
       error.friendlyMessage =
         error.response?.data?.message ||

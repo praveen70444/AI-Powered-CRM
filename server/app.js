@@ -15,9 +15,13 @@ const {
   generalLimiter,
   sanitizeInput,
   corsOptions,
+  aiLimiter,
 } = require("./middleware/securityMiddleware");
 
 const app = express();
+
+// Trust proxy for rate limiting (Render / Vite)
+app.set("trust proxy", 1);
 
 // CORS — must be first, before all other middleware
 app.use(cors(corsOptions));
@@ -79,7 +83,7 @@ app.use("/api/organization", organizationRoutes);
 app.use("/api/employee", employeeRoutes);
 
 // AI routes (employee-scoped)
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai", aiLimiter, aiRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
