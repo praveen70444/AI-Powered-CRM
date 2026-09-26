@@ -2,7 +2,8 @@ const noteService = require("../services/noteService");
 const getNotes = async (req, res) => {
   try {
     const { userId, organizationId } = req.user;
-    const notes = await noteService.getNotes(organizationId, userId);
+    const { relatedType, relatedTo } = req.query;
+    const notes = await noteService.getNotes(organizationId, userId, { relatedType, relatedTo });
     res.status(200).json({
       success: true,
       message: "Notes fetched successfully",

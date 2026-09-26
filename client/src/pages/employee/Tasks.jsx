@@ -8,7 +8,8 @@ import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import ExportMenu from "../../components/employee/ExportMenu";
 import { TASK_STATUSES, TASK_PRIORITIES } from "../../mock/tasks";
-import { getTasks, createTask, updateTask, deleteTask, exportTasks } from "../../services/employeeService";
+import { getTasks, createTask, updateTask, deleteTask } from "../../services/employeeService";
+import { exportTasks } from "../../services/exportService";
 
 const TABS = ["All", "Pending", "In Progress", "Completed"];
 

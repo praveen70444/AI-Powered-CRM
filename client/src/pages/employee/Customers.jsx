@@ -16,9 +16,10 @@ import NextActionBanner from "../../components/ai/NextActionBanner";
 import AIEmailComposer from "../../components/ai/AIEmailComposer";
 import { CUSTOMER_STATUSES } from "../../mock/customers";
 import {
-  getCustomers, createCustomer, updateCustomer, deleteCustomer, exportCustomers,
+  getCustomers, createCustomer, updateCustomer, deleteCustomer,
   getCustomerFollowups, createCustomerFollowup, updateCustomerFollowup, deleteCustomerFollowup,
 } from "../../services/employeeService";
+import { exportCustomers } from "../../services/exportService";
 import { getChurnRisk, getCustomerNextAction } from "../../services/aiService";
 import api from "../../services/api";
 

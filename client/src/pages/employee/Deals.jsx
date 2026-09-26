@@ -7,7 +7,8 @@ import StatusBadge from "../../components/employee/StatusBadge";
 import DealHealthBadge from "../../components/ai/DealHealthBadge";
 import NextActionBanner from "../../components/ai/NextActionBanner";
 import { DEAL_STAGES } from "../../mock/deals";
-import { getDeals, createDeal, updateDeal, deleteDeal, exportDeals, getNotes, createNote } from "../../services/employeeService";
+import { getDeals, createDeal, updateDeal, deleteDeal } from "../../services/employeeService";
+import { exportDeals } from "../../services/exportService";
 import { getDealHealthSummary, getDealNextAction } from "../../services/aiService";
 import api from "../../services/api";
 
@@ -44,14 +45,9 @@ function DealDetailPanel({ deal, onClose, onEdit, onDelete, onStageChange }) {
   useEffect(() => {
     if (!deal) return;
     setLoadingNotes(true);
-    // Fetch notes related to this deal
-    api.get(`/employee/notes?relatedType=Deal`)
-      .then((r) => {
-        const dealNotes = (r.data?.data || r.data || []).filter(
-          (n) => n.relatedTo === deal.title || n.relatedId === deal.id
-        );
-        setNotes(dealNotes);
-      })
+    // Fetch notes scoped to this deal by title
+    api.get(`/employee/notes?relatedType=Deal&relatedTo=${encodeURIComponent(deal.title)}`)
+      .then((r) => setNotes(r.data?.data || []))
       .catch(() => setNotes([]))
       .finally(() => setLoadingNotes(false));
   }, [deal]);
@@ -65,7 +61,7 @@ function DealDetailPanel({ deal, onClose, onEdit, onDelete, onStageChange }) {
         relatedType: "Deal",
         content: newNote.trim(),
       });
-      setNotes((prev) => [r.data.data || r.data, ...prev]);
+      setNotes((prev) => [r.data?.data || r.data, ...prev]);
       setNewNote("");
     } catch { /* silent */ }
     finally { setSavingNote(false); }

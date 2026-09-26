@@ -10,17 +10,20 @@ const mapNote = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
-const getNotes = async (organizationId, authorId) => {
+const getNotes = async (organizationId, authorId, { relatedType, relatedTo } = {}) => {
+  const conditions = ['n.organization_id = $1', 'n.author_id = $2'];
+  const params = [organizationId, authorId];
+  let idx = 3;
+  if (relatedType) { conditions.push(`n.related_type = $${idx}`); params.push(relatedType); idx++; }
+  if (relatedTo)   { conditions.push(`n.related_to = $${idx}`);   params.push(relatedTo);   idx++; }
+  const where = conditions.join(' AND ');
   const result = await pool.query(
-    `
-    SELECT n.*, u.name AS author_name
-    FROM notes n
-    JOIN users u ON u.id = n.author_id
-    WHERE n.organization_id = $1
-      AND n.author_id = $2
-    ORDER BY n.created_at DESC
-    `,
-    [organizationId, authorId]
+    `SELECT n.*, u.name AS author_name
+     FROM notes n
+     JOIN users u ON u.id = n.author_id
+     WHERE ${where}
+     ORDER BY n.created_at DESC`,
+    params
   );
   return result.rows.map(mapNote);
 };

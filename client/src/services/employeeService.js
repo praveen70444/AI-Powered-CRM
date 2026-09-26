@@ -46,7 +46,8 @@ export const convertLead = async (id, options = {}) => {
   return response.data;
 };
 export const exportLeads = (format = "csv") => {
-  window.open(`${api.defaults.baseURL}/employee/export/leads?format=${format}`, "_blank");
+  // Use exportService.exportLeads() instead — authenticated blob download
+  console.warn("Use exportService.exportLeads() for authenticated downloads");
 };
 
 // Lead follow-ups
@@ -91,7 +92,7 @@ export const deleteCustomer = async (id) => {
   return response.data;
 };
 export const exportCustomers = (format = "csv") => {
-  window.open(`${api.defaults.baseURL}/employee/export/customers?format=${format}`, "_blank");
+  console.warn("Use exportService.exportCustomers() for authenticated downloads");
 };
 
 // Customer follow-ups
@@ -130,7 +131,7 @@ export const deleteDeal = async (id) => {
   return response.data;
 };
 export const exportDeals = (format = "csv") => {
-  window.open(`${api.defaults.baseURL}/employee/export/deals?format=${format}`, "_blank");
+  console.warn("Use exportService.exportDeals() for authenticated downloads");
 };
 
 // ── TASKS ────────────────────────────────────────────────────────
@@ -151,7 +152,7 @@ export const deleteTask = async (id) => {
   return response.data;
 };
 export const exportTasks = (format = "csv") => {
-  window.open(`${api.defaults.baseURL}/employee/export/tasks?format=${format}`, "_blank");
+  console.warn("Use exportService.exportTasks() for authenticated downloads");
 };
 
 // ── ACTIVITIES ───────────────────────────────────────────────────
