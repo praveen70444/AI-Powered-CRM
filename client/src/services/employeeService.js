@@ -49,6 +49,30 @@ export const exportLeads = (format = "csv") => {
   window.open(`${api.defaults.baseURL}/employee/export/leads?format=${format}`, "_blank");
 };
 
+// Lead follow-ups
+export const getLeadFollowups = async (leadId) => {
+  const response = await api.get(`/employee/leads/${leadId}/followups`);
+  return response.data;
+};
+export const createLeadFollowup = async (leadId, payload) => {
+  const response = await api.post(`/employee/leads/${leadId}/followups`, payload);
+  return response.data;
+};
+export const updateLeadFollowup = async (id, payload) => {
+  const response = await api.put(`/employee/leads/followups/${id}`, payload);
+  return response.data;
+};
+export const deleteLeadFollowup = async (id) => {
+  const response = await api.delete(`/employee/leads/followups/${id}`);
+  return response.data;
+};
+
+// Lead bulk upload
+export const bulkUploadLeads = async (leads) => {
+  const response = await api.post("/employee/leads/bulk-upload", { leads });
+  return response.data;
+};
+
 // ── CUSTOMERS ────────────────────────────────────────────────────
 export const getCustomers = async () => {
   const response = await api.get("/employee/customers");
@@ -68,6 +92,24 @@ export const deleteCustomer = async (id) => {
 };
 export const exportCustomers = (format = "csv") => {
   window.open(`${api.defaults.baseURL}/employee/export/customers?format=${format}`, "_blank");
+};
+
+// Customer follow-ups
+export const getCustomerFollowups = async (customerId) => {
+  const response = await api.get(`/employee/customers/${customerId}/followups`);
+  return response.data;
+};
+export const createCustomerFollowup = async (customerId, payload) => {
+  const response = await api.post(`/employee/customers/${customerId}/followups`, payload);
+  return response.data;
+};
+export const updateCustomerFollowup = async (id, payload) => {
+  const response = await api.put(`/employee/customers/followups/${id}`, payload);
+  return response.data;
+};
+export const deleteCustomerFollowup = async (id) => {
+  const response = await api.delete(`/employee/customers/followups/${id}`);
+  return response.data;
 };
 
 // ── DEALS ────────────────────────────────────────────────────────
