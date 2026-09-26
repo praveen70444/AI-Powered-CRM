@@ -45,11 +45,37 @@ const createFollowup = async (organizationId, authorId, leadId, payload) => {
     ]
   );
   const row = await pool.query(
-    `SELECT f.*, u.name AS author_name
-     FROM lead_followups f JOIN users u ON u.id = f.author_id
+    `SELECT f.*, u.name AS author_name, l.name AS lead_name
+     FROM lead_followups f 
+     JOIN users u ON u.id = f.author_id
+     JOIN leads l ON l.id = f.lead_id
      WHERE f.id = $1`,
     [result.rows[0].id]
   );
+  
+  // Create a calendar event for the follow-up
+  try {
+    const calendarService = require('./calendarService');
+    const followupDateObj = new Date(followupDate || new Date().toISOString().split("T")[0]);
+    // Set time to 10:00 AM by default for followups
+    followupDateObj.setHours(10, 0, 0, 0);
+    const endObj = new Date(followupDateObj);
+    endObj.setHours(11, 0, 0, 0);
+    
+    await calendarService.createEvent(organizationId, authorId, {
+      title: `Lead Follow-up: ${row.rows[0].lead_name}`,
+      description: note.trim(),
+      event_type: 'Call', // Default to Call
+      start_time: followupDateObj.toISOString(),
+      end_time: endObj.toISOString(),
+      is_all_day: false,
+      related_type: 'lead_followup',
+      related_id: result.rows[0].id
+    });
+  } catch (err) {
+    console.error("Failed to create calendar event for follow-up:", err);
+  }
+  
   return mapFollowup(row.rows[0]);
 };
 

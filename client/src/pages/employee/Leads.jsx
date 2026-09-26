@@ -354,7 +354,7 @@ function BulkUploadModal({ open, onClose, onDone }) {
           <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 space-y-1">
             <p className="font-medium">Expected CSV columns (Facebook Lead Ads format):</p>
             <p className="font-mono text-xs text-blue-600">
-              full_name · phone · purpose_of_purchase · plot_size_required · budget · plan_to_purchase · would_you_like_to_schedule_a_free_site_visit · lead_status · platform
+              full_name · phone · email · zip_code · purpose_of_purchase · plot_size_required · budget · plan_to_purchase · would_you_like_to_schedule_a_free_site_visit · lead_status · platform
             </p>
           </div>
           <div>

@@ -10,6 +10,7 @@ const mapLead = (row) => ({
   phone: row.phone,
   status: row.status,
   source: row.source,
+  zipCode: row.zip_code,
   value: Number(row.value),
   purposeOfPurchase: row.purpose_of_purchase,
   plotSize: row.plot_size,
@@ -70,7 +71,7 @@ const getLeadById = async (id, organizationId, ownerId) => {
   return mapLead(result.rows[0]);
 };
 const createLead = async (organizationId, ownerId, payload) => {
-  const { name, company, email, phone, status, source, value,
+  const { name, company, email, phone, status, source, value, zipCode,
           purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
   if (!name || !company || !email) {
     const error = new Error("Name, company and email are required");
@@ -92,9 +93,9 @@ const createLead = async (organizationId, ownerId, payload) => {
     `
     INSERT INTO leads (
       organization_id, owner_id, name, company, email, phone, status, source, value,
-      purpose_of_purchase, plot_size, budget, plan_to_purchase, site_visit
+      purpose_of_purchase, plot_size, budget, plan_to_purchase, site_visit, zip_code
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
     `,
     [
@@ -112,6 +113,7 @@ const createLead = async (organizationId, ownerId, payload) => {
       budget || null,
       planToPurchase || null,
       siteVisit || null,
+      zipCode || null,
     ]
   );
   const lead = await getLeadById(result.rows[0].id, organizationId, ownerId);
@@ -123,7 +125,7 @@ const createLead = async (organizationId, ownerId, payload) => {
   return lead;
 };
 const updateLead = async (id, organizationId, ownerId, payload) => {
-  const { name, company, email, phone, status, source, value,
+  const { name, company, email, phone, status, source, value, zipCode,
           purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
   if (status && !LEAD_STATUSES.includes(status)) {
     const error = new Error("Invalid lead status");
@@ -152,10 +154,11 @@ const updateLead = async (id, organizationId, ownerId, payload) => {
       budget              = CASE WHEN $12 THEN $13 ELSE budget END,
       plan_to_purchase    = CASE WHEN $14 THEN $15 ELSE plan_to_purchase END,
       site_visit          = CASE WHEN $16 THEN $17 ELSE site_visit END,
+      zip_code            = CASE WHEN $18 THEN $19 ELSE zip_code END,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = $18
-      AND organization_id = $19
-      AND owner_id = $20
+    WHERE id = $20
+      AND organization_id = $21
+      AND owner_id = $22
     RETURNING id
     `,
     [
@@ -176,6 +179,8 @@ const updateLead = async (id, organizationId, ownerId, payload) => {
       planToPurchase !== undefined, planToPurchase || null,
       // site_visit
       siteVisit !== undefined, siteVisit || null,
+      // zip_code
+      zipCode !== undefined, zipCode || null,
       id,
       organizationId,
       ownerId,

@@ -46,7 +46,6 @@ function GlobalSearch() {
   const allItems = results ? [
     ...results.leads.map(r => ({ ...r, route: "/employee/leads", color: "text-blue-500", Icon: Users })),
     ...results.customers.map(r => ({ ...r, route: "/employee/customers", color: "text-green-500", Icon: Contact })),
-    ...results.deals.map(r => ({ ...r, name: r.name || r.title, route: "/employee/deals", color: "text-amber-500", Icon: Briefcase })),
   ] : [];
 
   function handleKeyDown(e) {
@@ -90,7 +89,6 @@ function GlobalSearch() {
               {[
                 { key: "leads", label: "Leads", items: results.leads, offset: 0, color: "text-blue-500", Icon: Users },
                 { key: "customers", label: "Customers", items: results.customers, offset: results.leads.length, color: "text-green-500", Icon: Contact },
-                { key: "deals", label: "Deals", items: results.deals, offset: results.leads.length + results.customers.length, color: "text-amber-500", Icon: Briefcase },
               ].map(({ key, label, items, offset, color, Icon }) => items.length > 0 && (
                 <div key={key}>
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wide bg-gray-50 border-b border-gray-100">{label}</p>

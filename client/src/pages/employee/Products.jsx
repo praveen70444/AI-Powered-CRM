@@ -22,7 +22,10 @@ function Products() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true });
+  const [form, setForm] = useState({ 
+    name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true, photo_url: "",
+    features: "", price_per_sq_yard: "", total_acres: "", booking_advance: "", r_c: "", month_launched: "" 
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -45,12 +48,18 @@ function Products() {
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function openAdd() {
-    setForm({ name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true });
+    setForm({ 
+      name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true, photo_url: "",
+      features: "", price_per_sq_yard: "", total_acres: "", booking_advance: "", r_c: "", month_launched: "" 
+    });
     setActiveProduct(null); setModalOpen(true);
   }
 
   function openEdit(p) {
-    setForm({ name: p.name, description: p.description || "", sku: p.sku || "", category: p.category || "", unit_price: p.unitPrice, cost_price: p.costPrice || "", is_active: p.isActive });
+    setForm({ 
+      name: p.name, description: p.description || "", sku: p.sku || "", category: p.category || "", unit_price: p.unitPrice, cost_price: p.costPrice || "", is_active: p.isActive, photo_url: p.photoUrl || "",
+      features: p.features || "", price_per_sq_yard: p.pricePerSqYard || "", total_acres: p.totalAcres || "", booking_advance: p.bookingAdvance || "", r_c: p.rC || "", month_launched: p.monthLaunched || ""
+    });
     setActiveProduct(p); setModalOpen(true);
   }
 
@@ -58,7 +67,13 @@ function Products() {
     e.preventDefault();
     setSaving(true); setError("");
     try {
-      const payload = { ...form, unit_price: Number(form.unit_price) || 0, cost_price: form.cost_price ? Number(form.cost_price) : null };
+      const payload = { 
+        ...form, 
+        unit_price: Number(form.unit_price) || 0, cost_price: form.cost_price ? Number(form.cost_price) : null,
+        price_per_sq_yard: form.price_per_sq_yard ? Number(form.price_per_sq_yard) : null,
+        total_acres: form.total_acres ? Number(form.total_acres) : null,
+        booking_advance: form.booking_advance ? Number(form.booking_advance) : null
+      };
       if (activeProduct) {
         const res = await api.put(`/employee/products/${activeProduct.id}`, payload);
         setProducts(prev => prev.map(p => p.id === activeProduct.id ? res.data.data : p));
@@ -106,6 +121,7 @@ function Products() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="px-6 py-3 font-medium">Photo</th>
                 <th className="px-6 py-3 font-medium">Product</th>
                 <th className="px-6 py-3 font-medium">SKU</th>
                 <th className="px-6 py-3 font-medium">Category</th>
@@ -118,6 +134,15 @@ function Products() {
             <tbody>
               {pageItems.map(p => (
                 <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+                  <td className="px-6 py-4">
+                    {p.photoUrl ? (
+                      <img src={p.photoUrl} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+                        <Package size={16} className="text-gray-400" />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">{p.name}</p>
                     {p.description && <p className="text-xs text-gray-400 truncate max-w-xs">{p.description}</p>}
@@ -166,12 +191,41 @@ function Products() {
               <input value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} placeholder="e.g. Software" className={inputClass} />
             </div>
             <div>
+              <label className="text-xs font-medium text-gray-500">Photo URL</label>
+              <input value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="https://..." className={inputClass} />
+            </div>
+            <div>
               <label className="text-xs font-medium text-gray-500">Unit Price (₹) *</label>
               <input type="number" min="0" step="0.01" value={form.unit_price} onChange={e => setForm(p => ({ ...p, unit_price: e.target.value }))} required className={inputClass} />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Cost Price (₹)</label>
               <input type="number" min="0" step="0.01" value={form.cost_price} onChange={e => setForm(p => ({ ...p, cost_price: e.target.value }))} placeholder="Optional" className={inputClass} />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-gray-500">Features</label>
+              <textarea rows={2} value={form.features} onChange={e => setForm(p => ({ ...p, features: e.target.value }))}
+                className={`${inputClass} resize-none`} placeholder="Detailed features (no word limit)" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Price/sq yard (₹)</label>
+              <input type="number" min="0" step="0.01" value={form.price_per_sq_yard} onChange={e => setForm(p => ({ ...p, price_per_sq_yard: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Total Acres</label>
+              <input type="number" min="0" step="0.01" value={form.total_acres} onChange={e => setForm(p => ({ ...p, total_acres: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Booking Advance (₹)</label>
+              <input type="number" min="0" step="0.01" value={form.booking_advance} onChange={e => setForm(p => ({ ...p, booking_advance: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">R/C</label>
+              <input value={form.r_c} onChange={e => setForm(p => ({ ...p, r_c: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Month Launched</label>
+              <input value={form.month_launched} onChange={e => setForm(p => ({ ...p, month_launched: e.target.value }))} placeholder="e.g. Oct 2026" className={inputClass} />
             </div>
             <div className="col-span-2">
               <label className="text-xs font-medium text-gray-500">Description</label>

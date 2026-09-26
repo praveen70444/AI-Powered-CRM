@@ -206,6 +206,11 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
                 { icon: Building2, label: "Industry", value: customer.industry },
                 { icon: IndianRupee, label: "Total Spend", value: customer.totalSpend ? `₹${Number(customer.totalSpend).toLocaleString("en-IN")}` : null },
                 { icon: Calendar, label: "Customer Since", value: customer.since ? new Date(customer.since).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : null },
+                { icon: Building2, label: "Phase No", value: customer.phaseNo },
+                { icon: Building2, label: "Flat No", value: customer.flatNo },
+                { icon: Building2, label: "Total Sq Yd", value: customer.totalSqYd },
+                { icon: IndianRupee, label: "Rate Purchased", value: customer.ratePurchased ? `₹${Number(customer.ratePurchased).toLocaleString("en-IN")}` : null },
+                { icon: IndianRupee, label: "Payment Mode", value: customer.paymentMode },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
@@ -258,6 +263,7 @@ function Customers() {
   const [analyzingChurn, setAnalyzingChurn] = useState(false);
   const [emailComposerOpen, setEmailComposerOpen] = useState(false);
   const [detailCustomer, setDetailCustomer] = useState(null);
+  const [products, setProducts] = useState([]);
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -269,7 +275,10 @@ function Customers() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadCustomers(); }, [loadCustomers]);
+  useEffect(() => { 
+    loadCustomers(); 
+    api.get("/employee/products?limit=200").then(res => setProducts(res.data.data || [])).catch(()=>{});
+  }, [loadCustomers]);
 
   const runChurnAnalysis = async () => {
     setAnalyzingChurn(true);
@@ -320,6 +329,13 @@ function Customers() {
       status: form.get("status"),
       industry: form.get("industry"),
       totalSpend: Number(form.get("totalSpend")) || 0,
+      photo_url: form.get("photo_url"),
+      mapped_product_id: form.get("mapped_product_id") || null,
+      phase_no: form.get("phase_no"),
+      flat_no: form.get("flat_no"),
+      total_sq_yd: form.get("total_sq_yd") ? Number(form.get("total_sq_yd")) : null,
+      rate_purchased: form.get("rate_purchased") ? Number(form.get("rate_purchased")) : null,
+      payment_mode: form.get("payment_mode")
     };
     setSaving(true); setError("");
     try {
@@ -384,6 +400,7 @@ function Customers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="px-4 py-3 font-medium">Photo</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
                 <th className="px-4 py-3 font-medium">Company</th>
@@ -402,6 +419,15 @@ function Customers() {
                   onClick={() => setDetailCustomer(customer)}
                   className="border-b border-gray-50 hover:bg-blue-50/30 cursor-pointer transition-colors group"
                 >
+                  <td className="px-4 py-3">
+                    {customer.photoUrl ? (
+                      <img src={customer.photoUrl} alt={customer.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                        <Contact size={16} className="text-gray-400" />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       <div>
@@ -500,9 +526,50 @@ function Customers() {
               </select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Total Spend (₹)</label>
+              <input type="number" name="totalSpend" defaultValue={activeCustomer?.totalSpend} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Photo URL</label>
+              <input name="photo_url" defaultValue={activeCustomer?.photoUrl} placeholder="https://..." className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+          </div>
           <div>
-            <label className="text-xs font-medium text-gray-500">Total Spend (₹)</label>
-            <input type="number" name="totalSpend" defaultValue={activeCustomer?.totalSpend} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            <label className="text-xs font-medium text-gray-500">Map to Product (Venture)</label>
+            <select name="mapped_product_id" defaultValue={activeCustomer?.mappedProductId || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+              <option value="">— Select Product —</option>
+              {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Phase No</label>
+              <input name="phase_no" defaultValue={activeCustomer?.phaseNo} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Flat No</label>
+              <input name="flat_no" defaultValue={activeCustomer?.flatNo} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Total Sq Yd</label>
+              <input type="number" step="0.01" name="total_sq_yd" defaultValue={activeCustomer?.totalSqYd} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Rate Purchased (₹)</label>
+              <input type="number" step="0.01" name="rate_purchased" defaultValue={activeCustomer?.ratePurchased} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-500">Payment Mode</label>
+            <select name="payment_mode" defaultValue={activeCustomer?.paymentMode || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+              <option value="">— Select —</option>
+              <option value="Cash">Cash</option>
+              <option value="Loan">Loan</option>
+            </select>
           </div>
         </form>
       </Modal>

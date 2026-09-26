@@ -28,7 +28,40 @@ const getEvents = async (organizationId, ownerId, { start, end } = {}) => {
   if (end) { query += ` AND start_time <= $${params.length + 1}`; params.push(end); }
   query += ` ORDER BY start_time ASC`;
   const result = await pool.query(query, params);
-  return result.rows.map(mapEvent);
+  const events = result.rows.map(mapEvent);
+
+  // Fetch tasks and merge them as all-day events
+  let taskQuery = `SELECT * FROM tasks WHERE organization_id=$1 AND owner_id=$2 AND due_date IS NOT NULL`;
+  if (start) { taskQuery += ` AND due_date >= $3`; }
+  if (end) { taskQuery += ` AND due_date <= $${params.length + 1}`; }
+  const taskResult = await pool.query(taskQuery, params);
+  
+  const taskEvents = taskResult.rows.map(row => {
+    // Treat due date as 9 AM
+    const taskDate = new Date(row.due_date);
+    taskDate.setHours(9, 0, 0, 0);
+    return {
+      id: `task_${row.id}`,
+      title: `Task: ${row.title}`,
+      description: `Related to: ${row.related_to || 'None'}\nPriority: ${row.priority}\nStatus: ${row.status}`,
+      eventType: 'Task',
+      startTime: taskDate.toISOString(),
+      endTime: taskDate.toISOString(),
+      location: null,
+      isAllDay: true,
+      reminderMinutes: 0,
+      relatedType: 'task',
+      relatedId: row.id,
+      status: row.status,
+      ownerId: row.owner_id,
+      createdAt: row.created_at,
+      start_time: taskDate.toISOString(),
+      end_time: taskDate.toISOString(),
+      event_type: 'Task',
+    };
+  });
+
+  return [...events, ...taskEvents].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 };
 
 const getEventById = async (id, organizationId) => {

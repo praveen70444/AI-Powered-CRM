@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, UserPlus, Contact, KanbanSquare, ListChecks,
   Trophy, IndianRupee, Clock, CalendarDays, MapPin,
-  ChevronRight, AlertCircle, CheckCircle2,
+  ChevronRight, ChevronDown, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import StatCard from "../../components/employee/StatCard";
 import BarChart from "../../components/employee/BarChart";
@@ -37,6 +37,7 @@ const EVENT_TYPE_COLORS = {
 
 // ── Today's Events Card ────────────────────────────────────────────────────
 function TodayEventsCard({ events, onNavigate }) {
+  const [expandedId, setExpandedId] = useState(null);
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long", day: "2-digit", month: "long",
   });
@@ -67,36 +68,50 @@ function TodayEventsCard({ events, onNavigate }) {
         <ul className="space-y-3">
           {events.map((ev) => (
             <li key={ev.id}
-              onClick={onNavigate}
-              className="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/40 cursor-pointer transition-all group"
+              className="flex flex-col p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all group"
             >
-              {/* Time column */}
-              <div className="flex flex-col items-center justify-start pt-0.5 w-14 shrink-0">
-                <span className="text-xs font-semibold text-gray-700">{formatTime(ev.startTime)}</span>
-                <span className="text-xs text-gray-400">{formatTime(ev.endTime)}</span>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
-                    {ev.title}
-                  </p>
-                  <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_COLORS[ev.eventType] || EVENT_TYPE_COLORS.Other}`}>
-                    {ev.eventType}
-                  </span>
+              <div 
+                className="flex gap-3 cursor-pointer items-start"
+                onClick={() => setExpandedId(expandedId === ev.id ? null : ev.id)}
+              >
+                {/* Time column */}
+                <div className="flex flex-col items-center justify-start pt-0.5 w-14 shrink-0">
+                  <span className="text-xs font-semibold text-gray-700">{formatTime(ev.startTime)}</span>
+                  <span className="text-xs text-gray-400">{formatTime(ev.endTime)}</span>
                 </div>
-                {ev.description && (
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{ev.description}</p>
-                )}
-                {ev.location && (
-                  <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                    <MapPin size={11} /> {ev.location}
-                  </p>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                      {ev.title}
+                    </p>
+                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_COLORS[ev.eventType] || EVENT_TYPE_COLORS.Other}`}>
+                      {ev.eventType}
+                    </span>
+                  </div>
+                  {ev.location && (
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                      <MapPin size={11} /> {ev.location}
+                    </p>
+                  )}
+                </div>
+
+                {expandedId === ev.id ? (
+                  <ChevronDown size={14} className="text-blue-400 mt-0.5 shrink-0 transition-colors" />
+                ) : (
+                  <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 mt-0.5 shrink-0 transition-colors" />
                 )}
               </div>
-
-              <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 mt-0.5 shrink-0 transition-colors" />
+              
+              {expandedId === ev.id && (
+                <div className="mt-3 pt-3 border-t border-gray-100 pl-[68px] text-sm text-gray-600">
+                  <p className="mb-2 whitespace-pre-wrap">{ev.description || "No additional details provided."}</p>
+                  <button onClick={(e) => { e.stopPropagation(); onNavigate(); }} className="text-xs text-blue-600 hover:underline">
+                    View in Calendar →
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -107,6 +122,7 @@ function TodayEventsCard({ events, onNavigate }) {
 
 // ── Incomplete Tasks Card ──────────────────────────────────────────────────
 function IncompleteTasksCard({ tasks, onNavigate }) {
+  const [expandedId, setExpandedId] = useState(null);
   const todayStr = new Date().toISOString().split("T")[0];
 
   const getUrgency = (t) => {
@@ -150,35 +166,52 @@ function IncompleteTasksCard({ tasks, onNavigate }) {
             const style = urgencyStyle[urgency];
             return (
               <li key={t.id}
-                onClick={onNavigate}
-                className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all group"
+                className="flex flex-col p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all group"
               >
-                {/* Priority bar */}
-                <div className={`w-1 h-8 rounded-full shrink-0 ${
-                  t.priority === "High" ? "bg-red-500" :
-                  t.priority === "Medium" ? "bg-amber-500" :
-                  "bg-gray-300"
-                }`} />
+                <div 
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                >
+                  {/* Priority bar */}
+                  <div className={`w-1 h-8 rounded-full shrink-0 ${
+                    t.priority === "High" ? "bg-red-500" :
+                    t.priority === "Medium" ? "bg-amber-500" :
+                    "bg-gray-300"
+                  }`} />
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-blue-700 transition-colors">
-                    {t.title}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{t.type} · {t.relatedTo || "—"}</p>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate group-hover:text-blue-700 transition-colors">
+                      {t.title}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t.type} · {t.relatedTo || "—"}</p>
+                  </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {t.dueDate && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${style.chip}`}>
-                      {urgency === "overdue" ? "Overdue" :
-                       urgency === "today" ? "Today" :
-                       new Date(t.dueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
-                    </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {t.dueDate && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${style.chip}`}>
+                        {urgency === "overdue" ? "Overdue" :
+                         urgency === "today" ? "Today" :
+                         new Date(t.dueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                      </span>
+                    )}
+                    <StatusBadge value={t.priority} />
+                  </div>
+
+                  {expandedId === t.id ? (
+                    <ChevronDown size={14} className="text-blue-400 transition-colors" />
+                  ) : (
+                    <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
                   )}
-                  <StatusBadge value={t.priority} />
                 </div>
 
-                <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
+                {expandedId === t.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 pl-4 text-sm text-gray-600">
+                    <p className="mb-2 whitespace-pre-wrap">{t.description || "No additional details provided."}</p>
+                    <button onClick={(e) => { e.stopPropagation(); onNavigate(); }} className="text-xs text-blue-600 hover:underline">
+                      View in Tasks →
+                    </button>
+                  </div>
+                )}
               </li>
             );
           })}
