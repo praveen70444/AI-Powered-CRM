@@ -30,8 +30,8 @@ async function logAudit({
     entityId || null,
     oldValues ? JSON.stringify(oldValues) : null,
     newValues ? JSON.stringify(newValues) : null,
-    ipAddress || null,
-    userAgent || null,
+    sanitizeIP(ipAddress),
+    userAgent ? String(userAgent).slice(0, 500) : null,
   ];
   
   const result = await pool.query(query, values);
@@ -59,8 +59,8 @@ async function logLogin({
     userId || null,
     success,
     failureReason || null,
-    ipAddress || null,
-    userAgent || null,
+    sanitizeIP(ipAddress),
+    userAgent ? String(userAgent).slice(0, 500) : null,
   ];
   
   const result = await pool.query(query, values);
@@ -145,9 +145,21 @@ function auditMiddleware(req, res, next) {
   next();
 }
 
+/**
+ * Sanitize IP address — take only the first IP from x-forwarded-for chains
+ * and truncate to 100 chars to safely fit the column.
+ */
+function sanitizeIP(raw) {
+  if (!raw) return null;
+  // x-forwarded-for can be "client, proxy1, proxy2" — take first entry
+  const first = String(raw).split(',')[0].trim();
+  return first.slice(0, 100);
+}
+
 module.exports = {
   logAudit,
   logLogin,
+  sanitizeIP,
   getEntityAuditLogs,
   getUserAuditLogs,
   getOrganizationAuditLogs,

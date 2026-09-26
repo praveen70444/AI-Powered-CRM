@@ -85,6 +85,19 @@ app.use("/api/employee", employeeRoutes);
 // AI routes (employee-scoped)
 app.use("/api/ai", aiLimiter, aiRoutes);
 
+// ── SPA fallback ─────────────────────────────────────────────────────────────
+// Serve the React build when the frontend is bundled into the server deploy.
+// On Render, if client and server are deployed together, this handles page reloads.
+const clientDistPath = path.join(__dirname, "../client/dist");
+const fs = require("fs");
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  // All non-API routes → index.html so React Router handles them
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
+
 // Global error handler
 app.use((err, req, res, next) => {
   // Multer errors
