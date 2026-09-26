@@ -11,8 +11,18 @@ const mapLead = (row) => ({
   status: row.status,
   source: row.source,
   value: Number(row.value),
+  purposeOfPurchase: row.purpose_of_purchase,
+  plotSize: row.plot_size,
+  budget: row.budget,
+  planToPurchase: row.plan_to_purchase,
+  siteVisit: row.site_visit,
   owner: row.owner_name,
   ownerId: row.owner_id,
+  // AI fields — both camelCase and snake_case for compatibility
+  aiScore: row.ai_score,
+  aiScoreLabel: row.ai_score_label,
+  ai_score: row.ai_score,
+  ai_score_label: row.ai_score_label,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -60,7 +70,8 @@ const getLeadById = async (id, organizationId, ownerId) => {
   return mapLead(result.rows[0]);
 };
 const createLead = async (organizationId, ownerId, payload) => {
-  const { name, company, email, phone, status, source, value } = payload;
+  const { name, company, email, phone, status, source, value,
+          purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
   if (!name || !company || !email) {
     const error = new Error("Name, company and email are required");
     error.statusCode = 400;
@@ -80,9 +91,10 @@ const createLead = async (organizationId, ownerId, payload) => {
   const result = await pool.query(
     `
     INSERT INTO leads (
-      organization_id, owner_id, name, company, email, phone, status, source, value
+      organization_id, owner_id, name, company, email, phone, status, source, value,
+      purpose_of_purchase, plot_size, budget, plan_to_purchase, site_visit
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *
     `,
     [
@@ -95,6 +107,11 @@ const createLead = async (organizationId, ownerId, payload) => {
       finalStatus,
       source || null,
       Number(value) || 0,
+      purposeOfPurchase || null,
+      plotSize || null,
+      budget || null,
+      planToPurchase || null,
+      siteVisit || null,
     ]
   );
   const lead = await getLeadById(result.rows[0].id, organizationId, ownerId);
@@ -106,7 +123,8 @@ const createLead = async (organizationId, ownerId, payload) => {
   return lead;
 };
 const updateLead = async (id, organizationId, ownerId, payload) => {
-  const { name, company, email, phone, status, source, value } = payload;
+  const { name, company, email, phone, status, source, value,
+          purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
   if (status && !LEAD_STATUSES.includes(status)) {
     const error = new Error("Invalid lead status");
     error.statusCode = 400;
@@ -129,10 +147,15 @@ const updateLead = async (id, organizationId, ownerId, payload) => {
       status = COALESCE($5, status),
       source = COALESCE($6, source),
       value = COALESCE($7, value),
+      purpose_of_purchase = CASE WHEN $8 THEN $9 ELSE purpose_of_purchase END,
+      plot_size           = CASE WHEN $10 THEN $11 ELSE plot_size END,
+      budget              = CASE WHEN $12 THEN $13 ELSE budget END,
+      plan_to_purchase    = CASE WHEN $14 THEN $15 ELSE plan_to_purchase END,
+      site_visit          = CASE WHEN $16 THEN $17 ELSE site_visit END,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = $8
-      AND organization_id = $9
-      AND owner_id = $10
+    WHERE id = $18
+      AND organization_id = $19
+      AND owner_id = $20
     RETURNING id
     `,
     [
@@ -143,6 +166,16 @@ const updateLead = async (id, organizationId, ownerId, payload) => {
       status || null,
       source || null,
       value === undefined ? null : Number(value),
+      // purpose_of_purchase
+      purposeOfPurchase !== undefined, purposeOfPurchase || null,
+      // plot_size
+      plotSize !== undefined, plotSize || null,
+      // budget
+      budget !== undefined, budget || null,
+      // plan_to_purchase
+      planToPurchase !== undefined, planToPurchase || null,
+      // site_visit
+      siteVisit !== undefined, siteVisit || null,
       id,
       organizationId,
       ownerId,

@@ -133,7 +133,7 @@ const getEmployeeDashboard = async (userId, organizationId) => {
       AND owner_id = $2
       AND status != 'Completed'
     ORDER BY due_date ASC NULLS LAST
-    LIMIT 5
+    LIMIT 10
     `,
     [organizationId, userId]
   );
@@ -148,6 +148,21 @@ const getEmployeeDashboard = async (userId, organizationId) => {
     `,
     [organizationId, userId]
   );
+
+  // Today's calendar events
+  const todayEventsResult = await pool.query(
+    `
+    SELECT id, title, description, event_type, start_time, end_time, location, status
+    FROM calendar_events
+    WHERE organization_id = $1
+      AND owner_id = $2
+      AND start_time::date = CURRENT_DATE
+      AND status != 'Cancelled'
+    ORDER BY start_time ASC
+    `,
+    [organizationId, userId]
+  );
+
   return {
     summary: {
       totalLeads: Number(summaryRow.total_leads),
@@ -185,6 +200,16 @@ const getEmployeeDashboard = async (userId, organizationId) => {
       relatedTo: row.related_to,
       type: row.type,
       timestamp: row.occurred_at,
+    })),
+    todayEvents: todayEventsResult.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      eventType: row.event_type,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      location: row.location,
+      status: row.status,
     })),
   };
 };

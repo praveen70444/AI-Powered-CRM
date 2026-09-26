@@ -10,7 +10,8 @@
     "db:migrate": "node scripts/runMigration.js",
     "db:setup": "node scripts/setupDatabase.js",
     "db:seed": "node scripts/seedTestUsers.js",
-    "db:populate": "node scripts/seedSampleData.js"
+    "db:populate": "node scripts/seedSampleData.js",
+    "db:migrate4": "node scripts/runMigration4.js"
   },
   "keywords": [],
   "author": "",

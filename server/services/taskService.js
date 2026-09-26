@@ -87,6 +87,31 @@ const createTask = async (organizationId, ownerId, payload) => {
     [organizationId, ownerId, title, relatedTo || null, finalType, finalPriority, finalStatus, dueDate || null]
   );
   const task = await getTaskById(result.rows[0].id, organizationId, ownerId);
+
+  // Auto-create calendar event if task has a due date
+  if (dueDate) {
+    try {
+      const calendarService = require("./calendarService");
+      const startTime = new Date(dueDate);
+      startTime.setHours(9, 0, 0, 0);
+      const endTime = new Date(dueDate);
+      endTime.setHours(10, 0, 0, 0);
+      await calendarService.createEvent(organizationId, ownerId, {
+        title: `Task: ${title}`,
+        description: relatedTo ? `Related to: ${relatedTo}` : null,
+        event_type: "Task",
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        reminder_minutes: 30,
+        related_type: "task",
+        related_id: task.id,
+      });
+    } catch (calErr) {
+      // Don't fail task creation if calendar sync fails
+      console.warn("Calendar sync failed for task:", calErr.message);
+    }
+  }
+
   await createNotification(organizationId, ownerId, {
     type: "task",
     title: "New task assigned",

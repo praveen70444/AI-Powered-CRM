@@ -94,6 +94,14 @@ const { globalSearch } = require("../controllers/searchController");
 const { checkLeadDuplicate, checkCustomerDuplicate } = require("../controllers/duplicateController");
 const { getAnalyticsOverview, getSalesForecast, getWinLossAnalysis } = require("../controllers/analyticsController");
 const { getCustomFieldValues, upsertCustomFieldValues, getCustomFields } = require("../controllers/customFieldController");
+const { getFollowups, createFollowup, updateFollowup, deleteFollowup } = require("../controllers/leadFollowupController");
+const { bulkUploadLeads } = require("../controllers/leadBulkController");
+const {
+  getFollowups: getCustFollowups,
+  createFollowup: createCustFollowup,
+  updateFollowup: updateCustFollowup,
+  deleteFollowup: deleteCustFollowup,
+} = require("../controllers/customerFollowupController");
 const authMiddleware = require("../middleware/authMiddleware");
 const { requireEmployee } = require("../middleware/roleMiddleware");
 const router = express.Router();
@@ -122,11 +130,18 @@ router.get("/customers/check-duplicate", checkCustomerDuplicate);
 // Leads
 router.get("/leads", getLeads);
 router.post("/leads", createLead);
+router.post("/leads/bulk-upload", bulkUploadLeads);
 router.get("/leads/:id", getLead);
 router.put("/leads/:id", updateLead);
 router.delete("/leads/:id", deleteLead);
 router.post("/leads/:id/convert", convertLead);
 router.get("/leads/:id/conversion-history", getConversionHistory);
+
+// Lead follow-ups
+router.get("/leads/:leadId/followups", getFollowups);
+router.post("/leads/:leadId/followups", createFollowup);
+router.put("/leads/followups/:id", updateFollowup);
+router.delete("/leads/followups/:id", deleteFollowup);
 
 // Customers
 router.get("/customers", getCustomers);
@@ -134,6 +149,12 @@ router.post("/customers", createCustomer);
 router.get("/customers/:id", getCustomer);
 router.put("/customers/:id", updateCustomer);
 router.delete("/customers/:id", deleteCustomer);
+
+// Customer follow-ups
+router.get("/customers/:customerId/followups", getCustFollowups);
+router.post("/customers/:customerId/followups", createCustFollowup);
+router.put("/customers/followups/:id", updateCustFollowup);
+router.delete("/customers/followups/:id", deleteCustFollowup);
 
 // Deals
 router.get("/deals", getDeals);
