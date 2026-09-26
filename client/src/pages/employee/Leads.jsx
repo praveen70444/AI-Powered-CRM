@@ -8,6 +8,7 @@ import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import ExportMenu from "../../components/employee/ExportMenu";
 import ConvertLeadModal from "../../components/employee/ConvertLeadModal";
+import RowActions from "../../components/employee/RowActions";
 import TagsInput from "../../components/employee/TagsInput";
 import LeadScoreBadge from "../../components/ai/LeadScoreBadge";
 import NextActionBanner from "../../components/ai/NextActionBanner";
