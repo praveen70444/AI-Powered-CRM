@@ -30,9 +30,10 @@ const tomorrow = () => {
   return d;
 };
 
-const getTaskGroup = (dueDateStr) => {
-  if (!dueDateStr) return "No Due Date";
-  const due = new Date(dueDateStr);
+const getTaskGroup = (task) => {
+  if (task.status === "Completed") return "Completed";
+  if (!task.dueDate) return "No Due Date";
+  const due = new Date(task.dueDate);
   due.setHours(0, 0, 0, 0);
   const t = today().getTime();
   const y = yesterday().getTime();
@@ -45,7 +46,7 @@ const getTaskGroup = (dueDateStr) => {
   return "Upcoming";
 };
 
-const GROUP_ORDER = ["Overdue", "Yesterday", "Today", "Tomorrow", "Upcoming", "No Due Date"];
+const GROUP_ORDER = ["Overdue", "Yesterday", "Today", "Tomorrow", "Upcoming", "No Due Date", "Completed"];
 
 const GROUP_STYLES = {
   Overdue:      { dot: "bg-red-500",    label: "text-red-600",    badge: "bg-red-50 border-red-100",    icon: AlertCircle },
@@ -54,6 +55,7 @@ const GROUP_STYLES = {
   Tomorrow:     { dot: "bg-amber-500",  label: "text-amber-700",  badge: "bg-amber-50 border-amber-100",icon: CalendarDays },
   Upcoming:     { dot: "bg-emerald-500",label: "text-emerald-700",badge: "bg-emerald-50 border-emerald-100",icon: CalendarDays },
   "No Due Date":{ dot: "bg-gray-300",   label: "text-gray-400",   badge: "bg-gray-50 border-gray-100",  icon: CalendarDays },
+  Completed:    { dot: "bg-green-500",  label: "text-green-700",  badge: "bg-green-50 border-green-100",icon: ListChecks },
 };
 
 function formatDueDate(dueDateStr) {
@@ -121,7 +123,7 @@ function Tasks() {
   const grouped = useMemo(() => {
     const map = {};
     filtered.forEach((t) => {
-      const group = getTaskGroup(t.dueDate);
+      const group = getTaskGroup(t);
       if (!map[group]) map[group] = [];
       map[group].push(t);
     });
@@ -212,11 +214,11 @@ function Tasks() {
   }
 
   const todayCount = useMemo(
-    () => tasks.filter((t) => getTaskGroup(t.dueDate) === "Today" && t.status !== "Completed").length,
+    () => tasks.filter((t) => getTaskGroup(t) === "Today").length,
     [tasks]
   );
   const overdueCount = useMemo(
-    () => tasks.filter((t) => getTaskGroup(t.dueDate) === "Overdue" && t.status !== "Completed").length,
+    () => tasks.filter((t) => getTaskGroup(t) === "Overdue").length,
     [tasks]
   );
 

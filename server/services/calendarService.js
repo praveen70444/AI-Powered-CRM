@@ -30,10 +30,13 @@ const getEvents = async (organizationId, ownerId, { start, end } = {}) => {
   const result = await pool.query(query, params);
   const events = result.rows.map(mapEvent);
 
+  let startIdx = start ? 3 : null;
+  let endIdx = end ? (start ? 4 : 3) : null;
+
   // Fetch tasks and merge them as all-day events
   let taskQuery = `SELECT * FROM tasks WHERE organization_id=$1 AND owner_id=$2 AND due_date IS NOT NULL`;
-  if (start) { taskQuery += ` AND due_date >= $3`; }
-  if (end) { taskQuery += ` AND due_date <= $${params.length + 1}`; }
+  if (start) { taskQuery += ` AND due_date >= $${startIdx}`; }
+  if (end) { taskQuery += ` AND due_date <= $${endIdx}`; }
   const taskResult = await pool.query(taskQuery, params);
   
   const taskEvents = taskResult.rows.map(row => {
@@ -63,13 +66,13 @@ const getEvents = async (organizationId, ownerId, { start, end } = {}) => {
 
   // Fetch lead followups
   let leadFupQuery = `SELECT f.*, l.name as lead_name FROM lead_followups f JOIN leads l ON f.lead_id = l.id WHERE f.organization_id=$1 AND f.author_id=$2 AND f.followup_date IS NOT NULL`;
-  if (start) { leadFupQuery += ` AND f.followup_date >= $3`; }
-  if (end) { leadFupQuery += ` AND f.followup_date <= $${params.length + 1}`; }
+  if (start) { leadFupQuery += ` AND f.followup_date >= $${startIdx}`; }
+  if (end) { leadFupQuery += ` AND f.followup_date <= $${endIdx}`; }
   
   // Fetch customer followups
   let custFupQuery = `SELECT f.*, c.name as customer_name FROM customer_followups f JOIN customers c ON f.customer_id = c.id WHERE f.organization_id=$1 AND f.author_id=$2 AND f.followup_date IS NOT NULL`;
-  if (start) { custFupQuery += ` AND f.followup_date >= $3`; }
-  if (end) { custFupQuery += ` AND f.followup_date <= $${params.length + 1}`; }
+  if (start) { custFupQuery += ` AND f.followup_date >= $${startIdx}`; }
+  if (end) { custFupQuery += ` AND f.followup_date <= $${endIdx}`; }
 
   const [leadFupResult, custFupResult] = await Promise.all([
     pool.query(leadFupQuery, params),
