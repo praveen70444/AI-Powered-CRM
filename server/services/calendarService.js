@@ -22,7 +22,7 @@ const mapEvent = (row) => ({
 });
 
 const getEvents = async (organizationId, ownerId, { start, end } = {}) => {
-  let query = `SELECT * FROM calendar_events WHERE organization_id=$1 AND owner_id=$2`;
+  let query = `SELECT * FROM calendar_events WHERE organization_id=$1 AND owner_id=$2 AND (related_type IS NULL OR related_type NOT IN ('task', 'lead_followup', 'customer_followup'))`;
   const params = [organizationId, ownerId];
   if (start) { query += ` AND start_time >= $3`; params.push(start); }
   if (end) { query += ` AND start_time <= $${params.length + 1}`; params.push(end); }
