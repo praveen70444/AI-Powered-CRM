@@ -396,6 +396,7 @@ function Leads() {
   const [emailComposerOpen, setEmailComposerOpen] = useState(false);
   const [detailLead, setDetailLead] = useState(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const loadLeads = useCallback(async () => {
     try {

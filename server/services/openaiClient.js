@@ -15,7 +15,7 @@ const getOpenAIClient = async (organizationId) => {
   }
 
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY,
     baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
   });
 };
@@ -31,9 +31,8 @@ const getOpenAIClient = async (organizationId) => {
 const chatCompletion = async (organizationId, messages, options = {}) => {
   const client = await getOpenAIClient(organizationId);
 
-  const envModel = process.env.OPENAI_MODEL ? process.env.OPENAI_MODEL.trim() : null;
   const defaultOptions = {
-    model: options.model || envModel || "gpt-4o-mini",
+    model: options.model || process.env.OPENAI_MODEL || "gpt-4o-mini",
     temperature: options.temperature ?? 0.7,
     max_tokens: options.max_tokens ?? 500,
   };
@@ -99,32 +98,18 @@ const chatCompletion = async (organizationId, messages, options = {}) => {
 };
 
 /**
- * Parse a JSON response from OpenAI (handles markdown code blocks and extra text).
+ * Parse a JSON response from OpenAI (handles markdown code blocks).
  */
 const parseJSONResponse = (content) => {
   try {
-    // Try to extract JSON object { ... }
-    const startIndex = content.indexOf('{');
-    const endIndex = content.lastIndexOf('}');
-    
-    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-      const jsonStr = content.substring(startIndex, endIndex + 1);
-      return JSON.parse(jsonStr);
-    }
+    // Remove markdown code blocks if present
+    const cleaned = content
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
 
-    // Try to extract JSON array [ ... ]
-    const startArr = content.indexOf('[');
-    const endArr = content.lastIndexOf(']');
-    
-    if (startArr !== -1 && endArr !== -1 && endArr > startArr) {
-      const jsonStr = content.substring(startArr, endArr + 1);
-      return JSON.parse(jsonStr);
-    }
-
-    // Fallback
-    return JSON.parse(content.trim());
+    return JSON.parse(cleaned);
   } catch (error) {
-    console.error("Raw failed AI response:", content);
     throw new Error(`Failed to parse OpenAI JSON response: ${error.message}`);
   }
 };
