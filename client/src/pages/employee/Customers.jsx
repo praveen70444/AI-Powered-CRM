@@ -260,6 +260,7 @@ function Customers() {
   const [emailComposerOpen, setEmailComposerOpen] = useState(false);
   const [detailCustomer, setDetailCustomer] = useState(null);
   const [products, setProducts] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -361,6 +362,18 @@ function Customers() {
     } finally { setSaving(false); }
   }
 
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} customers?`)) return;
+    setSaving(true);
+    try {
+      await Promise.all(selectedIds.map(id => deleteCustomer(id)));
+      setCustomers(prev => prev.filter(c => !selectedIds.includes(c.id)));
+      setSelectedIds([]);
+    } catch (err) {
+      setError("Failed to bulk delete customers.");
+    } finally { setSaving(false); }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       <div className="flex items-center justify-end px-6 pt-4 gap-2">
@@ -374,10 +387,15 @@ function Customers() {
 
       <ListToolbar
         searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        onSearchChange={(v) => { setSearch(v); setPage(1); setSelectedIds([]); }}
         searchPlaceholder="Search by name, phone, company..."
         addLabel="Add Customer"
         onAddClick={openAddModal}
+        bulkActions={selectedIds.length > 0 && (
+          <button onClick={handleBulkDelete} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
+            {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+          </button>
+        )}
         filters={
           <FilterSelect value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={CUSTOMER_STATUSES} allLabel="All Statuses" />
         }
@@ -396,6 +414,12 @@ function Customers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="px-4 py-3 font-medium">
+                  <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                    checked={pageItems.length > 0 && selectedIds.length === pageItems.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? pageItems.map(c => c.id) : [])}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Venture</th>
                 <th className="px-4 py-3 font-medium">Phone No.</th>
@@ -414,6 +438,15 @@ function Customers() {
                   onClick={() => setDetailCustomer(customer)}
                   className="border-b border-gray-50 hover:bg-blue-50/30 cursor-pointer transition-colors group"
                 >
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                      checked={selectedIds.includes(customer.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedIds(prev => e.target.checked ? [...prev, customer.id] : prev.filter(id => id !== customer.id));
+                      }}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">{customer.name}</p>
                     <p className="text-xs text-gray-400">{customer.email}</p>

@@ -83,6 +83,7 @@ function Tasks() {
   const [activeTask, setActiveTask] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailTask, setDetailTask] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -182,6 +183,18 @@ function Tasks() {
     }
   }
 
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} tasks?`)) return;
+    setSaving(true);
+    try {
+      await Promise.all(selectedIds.map(id => deleteTask(id)));
+      setTasks(prev => prev.filter(t => !selectedIds.includes(t.id)));
+      setSelectedIds([]);
+    } catch (err) {
+      setError("Failed to bulk delete tasks.");
+    } finally { setSaving(false); }
+  };
+
   async function toggleStatus(task) {
     const next =
       task.status === "Completed" ? "Pending"
@@ -245,10 +258,15 @@ function Tasks() {
 
       <ListToolbar
         searchValue={search}
-        onSearchChange={setSearch}
+        onSearchChange={(v) => { setSearch(v); setSelectedIds([]); }}
         searchPlaceholder="Search tasks..."
         addLabel="Add Task"
         onAddClick={openAddModal}
+        bulkActions={selectedIds.length > 0 && (
+          <button onClick={handleBulkDelete} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
+            {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+          </button>
+        )}
         filters={
           <FilterSelect value={priority} onChange={setPriority} options={TASK_PRIORITIES} allLabel="All Priorities" />
         }
@@ -274,6 +292,13 @@ function Tasks() {
               <div key={group}>
                 {/* Group header */}
                 <div className={`flex items-center gap-2 px-6 py-2 border-b ${style.badge}`}>
+                  <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                    checked={groupTasks.length > 0 && groupTasks.every(t => selectedIds.includes(t.id))}
+                    onChange={(e) => {
+                      const ids = groupTasks.map(t => t.id);
+                      setSelectedIds(prev => e.target.checked ? [...new Set([...prev, ...ids])] : prev.filter(id => !ids.includes(id)));
+                    }}
+                  />
                   <div className={`w-2 h-2 rounded-full ${style.dot}`} />
                   <Icon size={13} className={style.label} />
                   <span className={`text-xs font-semibold uppercase tracking-wide ${style.label}`}>
@@ -295,6 +320,14 @@ function Tasks() {
                           isOverdue ? "border-l-2 border-red-400" : ""
                         }`}
                       >
+                        <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer mr-2"
+                          checked={selectedIds.includes(task.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSelectedIds(prev => e.target.checked ? [...prev, task.id] : prev.filter(id => id !== task.id));
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
                         <input
                           type="checkbox"
                           checked={task.status === "Completed"}

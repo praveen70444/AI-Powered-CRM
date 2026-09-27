@@ -524,10 +524,15 @@ function Leads() {
 
       <ListToolbar
         searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        onSearchChange={(v) => { setSearch(v); setPage(1); setSelectedIds([]); }}
         searchPlaceholder="Search by name, phone, company..."
         addLabel="Add Lead"
         onAddClick={openAddModal}
+        bulkActions={selectedIds.length > 0 && (
+          <button onClick={handleBulkDelete} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
+            {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+          </button>
+        )}
         filters={
           <>
             <FilterSelect value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={LEAD_STATUSES} allLabel="All Statuses" />
@@ -551,6 +556,12 @@ function Leads() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="px-4 py-3 font-medium">
+                  <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                    checked={pageItems.length > 0 && selectedIds.length === pageItems.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? pageItems.map(l => l.id) : [])}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Lead Name</th>
                 <th className="px-4 py-3 font-medium">Contact No.</th>
                 <th className="px-4 py-3 font-medium">Purpose</th>
@@ -567,9 +578,18 @@ function Leads() {
             <tbody>
               {pageItems.map((lead) => (
                 <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer group" onClick={(e) => {
-                  if (e.target.closest('td:last-child')) return; // Ignore clicks on the action menu column
+                  if (e.target.closest('td:last-child') || e.target.closest('td:first-child')) return; // Ignore clicks on actions or checkbox
                   setDetailLead(lead);
                 }}>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                      checked={selectedIds.includes(lead.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedIds(prev => e.target.checked ? [...prev, lead.id] : prev.filter(id => id !== lead.id));
+                      }}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div>
                       <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">

@@ -59,7 +59,7 @@ function RowActions({ onView, onEdit, onDelete, extra = [] }) {
     <div className="inline-block">
       <button
         ref={buttonRef}
-        onClick={() => setOpen((o) => !o)}
+        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
         className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
       >
         <MoreVertical size={16} />
@@ -73,7 +73,7 @@ function RowActions({ onView, onEdit, onDelete, extra = [] }) {
           {allActions.map(({ label, icon: Icon, action, danger }) => (
             <button
               key={label}
-              onClick={() => { setOpen(false); action(); }}
+              onClick={(e) => { e.stopPropagation(); setOpen(false); action(); }}
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${danger ? "text-red-600 hover:bg-red-50" : "text-gray-600 hover:bg-gray-50"}`}
             >
               <Icon size={14} /> {label}

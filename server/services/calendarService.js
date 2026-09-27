@@ -61,7 +61,49 @@ const getEvents = async (organizationId, ownerId, { start, end } = {}) => {
     };
   });
 
-  return [...events, ...taskEvents].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  // Fetch lead followups
+  let leadFupQuery = `SELECT f.*, l.name as lead_name FROM lead_followups f JOIN leads l ON f.lead_id = l.id WHERE f.organization_id=$1 AND f.author_id=$2 AND f.followup_date IS NOT NULL`;
+  if (start) { leadFupQuery += ` AND f.followup_date >= $3`; }
+  if (end) { leadFupQuery += ` AND f.followup_date <= $${params.length + 1}`; }
+  
+  // Fetch customer followups
+  let custFupQuery = `SELECT f.*, c.name as customer_name FROM customer_followups f JOIN customers c ON f.customer_id = c.id WHERE f.organization_id=$1 AND f.author_id=$2 AND f.followup_date IS NOT NULL`;
+  if (start) { custFupQuery += ` AND f.followup_date >= $3`; }
+  if (end) { custFupQuery += ` AND f.followup_date <= $${params.length + 1}`; }
+
+  const [leadFupResult, custFupResult] = await Promise.all([
+    pool.query(leadFupQuery, params),
+    pool.query(custFupQuery, params)
+  ]);
+
+  const mapFollowupToEvent = (row, type, name) => {
+    const fupDate = new Date(row.followup_date);
+    fupDate.setHours(10, 0, 0, 0); // 10 AM default
+    return {
+      id: `fup_${type}_${row.id}`,
+      title: `${type === 'lead' ? 'Lead' : 'Customer'} Follow-up: ${name}`,
+      description: row.note,
+      eventType: 'Call',
+      startTime: fupDate.toISOString(),
+      endTime: fupDate.toISOString(),
+      location: null,
+      isAllDay: true,
+      reminderMinutes: 0,
+      relatedType: type,
+      relatedId: row.id,
+      status: 'pending',
+      ownerId: row.author_id,
+      createdAt: row.created_at,
+      start_time: fupDate.toISOString(),
+      end_time: fupDate.toISOString(),
+      event_type: 'Call',
+    };
+  };
+
+  const leadFups = leadFupResult.rows.map(row => mapFollowupToEvent(row, 'lead', row.lead_name));
+  const custFups = custFupResult.rows.map(row => mapFollowupToEvent(row, 'customer', row.customer_name));
+
+  return [...events, ...taskEvents, ...leadFups, ...custFups].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 };
 
 const getEventById = async (id, organizationId) => {

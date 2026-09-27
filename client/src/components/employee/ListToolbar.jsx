@@ -1,5 +1,5 @@
 import { Search, Plus } from "lucide-react";
-function ListToolbar({ searchValue, onSearchChange, searchPlaceholder = "Search...", filters, onAddClick, addLabel }) {
+function ListToolbar({ searchValue, onSearchChange, searchPlaceholder = "Search...", filters, bulkActions, onAddClick, addLabel }) {
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-3 px-6 py-4 border-b border-gray-100">
       <div className="relative flex-1 max-w-sm">
@@ -12,6 +12,7 @@ function ListToolbar({ searchValue, onSearchChange, searchPlaceholder = "Search.
         />
       </div>
       <div className="flex flex-wrap items-center gap-2 flex-1">
+        {bulkActions}
         {filters}
       </div>
       {addLabel && (

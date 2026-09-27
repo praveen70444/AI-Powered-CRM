@@ -89,6 +89,7 @@ function Products() {
   const [activeProduct, setActiveProduct] = useState(null);
   const [detailVenture, setDetailVenture] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [form, setForm] = useState({ 
     name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true, photo_url: "",
     features: "", price_per_sq_yard: "", total_acres: "", booking_advance: "", r_c: "", month_launched: "" 
@@ -163,16 +164,32 @@ function Products() {
     finally { setSaving(false); }
   }
 
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} products?`)) return;
+    setSaving(true);
+    try {
+      await Promise.all(selectedIds.map(id => api.delete(`/employee/products/${id}`)));
+      setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
+      setSelectedIds([]);
+    } catch { setError("Failed to bulk delete products"); }
+    finally { setSaving(false); }
+  };
+
   const inputClass = "mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500";
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       <ListToolbar
         searchValue={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={v => { setSearch(v); setPage(1); setSelectedIds([]); }}
         searchPlaceholder="Search by name, SKU, category..."
         addLabel="Add Product"
         onAddClick={openAdd}
+        bulkActions={selectedIds.length > 0 && (
+          <button onClick={handleBulkDelete} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
+            {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+          </button>
+        )}
         filters={
           <FilterSelect value={filterActive} onChange={v => { setFilterActive(v); setPage(1); }}
             options={["active", "inactive"]} allLabel="All" />
@@ -188,6 +205,12 @@ function Products() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="px-6 py-3 font-medium">
+                  <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                    checked={pageItems.length > 0 && selectedIds.length === pageItems.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? pageItems.map(p => p.id) : [])}
+                  />
+                </th>
                 <th className="px-6 py-3 font-medium">S.No.</th>
                 <th className="px-6 py-3 font-medium">Venture Name</th>
                 <th className="px-6 py-3 font-medium">Features</th>
@@ -203,9 +226,18 @@ function Products() {
             <tbody>
               {pageItems.map((p, i) => (
                 <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer group" onClick={(e) => {
-                  if (e.target.closest('td:last-child')) return;
+                  if (e.target.closest('td:last-child') || e.target.closest('td:first-child')) return;
                   setDetailVenture(p);
                 }}>
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedIds(prev => e.target.checked ? [...prev, p.id] : prev.filter(id => id !== p.id));
+                      }}
+                    />
+                  </td>
                   <td className="px-6 py-4 text-xs font-medium text-gray-500">
                     {(page - 1) * PAGE_SIZE + i + 1}
                   </td>
