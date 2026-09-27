@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Package } from "lucide-react";
+import { Package, X, Pencil, Trash2, Building2 } from "lucide-react";
 import ListToolbar from "../../components/employee/ListToolbar";
 import FilterSelect from "../../components/employee/FilterSelect";
 import RowActions from "../../components/employee/RowActions";
@@ -11,6 +11,72 @@ import api from "../../services/api";
 
 const PAGE_SIZE = 10;
 
+// ── Venture Detail Side Panel ─────────────────────────────────────────────
+function VentureDetailPanel({ venture, onClose, onEdit, onDelete }) {
+  if (!venture) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/30" onClick={onClose} />
+      <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">{venture.name}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{venture.category || "Venture"}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
+              <Pencil size={15} />
+            </button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+              <Trash2 size={15} />
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
+          <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm space-y-4">
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-4">
+              <Building2 size={16} className="text-blue-600" /> Venture Details
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Features</p>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">{venture.features || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Price / Sq. Yd.</p>
+                <p className="text-sm text-gray-900">{venture.pricePerSqYard ? `₹${Number(venture.pricePerSqYard).toLocaleString("en-IN")}` : (venture.unitPrice ? `₹${Number(venture.unitPrice).toLocaleString("en-IN")}` : "—")}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Total Acres</p>
+                <p className="text-sm text-gray-900">{venture.totalAcres ? `${venture.totalAcres} Acres` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Booking Advance</p>
+                <p className="text-sm text-gray-900">{venture.bookingAdvance ? `₹${Number(venture.bookingAdvance).toLocaleString("en-IN")}` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">R/C</p>
+                <p className="text-sm text-gray-900">{venture.rC || venture.r_c || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Month Launched</p>
+                <p className="text-sm text-gray-900">{venture.monthLaunched || "—"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +87,7 @@ function Products() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
+  const [detailVenture, setDetailVenture] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ 
     name: "", description: "", sku: "", category: "", unit_price: "", cost_price: "", is_active: true, photo_url: "",
@@ -121,7 +188,7 @@ function Products() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-6 py-3 font-medium">Photo</th>
+                <th className="px-6 py-3 font-medium">S.No.</th>
                 <th className="px-6 py-3 font-medium">Venture Name</th>
                 <th className="px-6 py-3 font-medium">Features</th>
                 <th className="px-6 py-3 font-medium">Price / Sq. Yd.</th>
@@ -134,16 +201,13 @@ function Products() {
               </tr>
             </thead>
             <tbody>
-              {pageItems.map(p => (
-                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                  <td className="px-6 py-4">
-                    {p.photoUrl ? (
-                      <img src={p.photoUrl} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
-                        <Package size={16} className="text-gray-400" />
-                      </div>
-                    )}
+              {pageItems.map((p, i) => (
+                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer group" onClick={(e) => {
+                  if (e.target.closest('td:last-child')) return;
+                  setDetailVenture(p);
+                }}>
+                  <td className="px-6 py-4 text-xs font-medium text-gray-500">
+                    {(page - 1) * PAGE_SIZE + i + 1}
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">{p.name}</p>
@@ -258,6 +322,13 @@ function Products() {
         }>
         <p className="text-sm text-gray-600">Delete <strong>{deleteTarget?.name}</strong>? This cannot be undone.</p>
       </Modal>
+
+      <VentureDetailPanel 
+        venture={detailVenture} 
+        onClose={() => setDetailVenture(null)}
+        onEdit={() => { setDetailVenture(null); openEdit(detailVenture); }}
+        onDelete={() => { setDetailVenture(null); setDeleteTarget(detailVenture); }}
+      />
     </div>
   );
 }

@@ -73,8 +73,8 @@ const getLeadById = async (id, organizationId, ownerId) => {
 const createLead = async (organizationId, ownerId, payload) => {
   const { name, company, email, phone, status, source, value, zipCode,
           purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
-  if (!name || !company || !email) {
-    const error = new Error("Name, company and email are required");
+  if (!name) {
+    const error = new Error("Name is required");
     error.statusCode = 400;
     throw error;
   }
@@ -84,11 +84,7 @@ const createLead = async (organizationId, ownerId, payload) => {
     error.statusCode = 400;
     throw error;
   }
-  if (source && !LEAD_SOURCES.includes(source)) {
-    const error = new Error("Invalid lead source");
-    error.statusCode = 400;
-    throw error;
-  }
+
   const result = await pool.query(
     `
     INSERT INTO leads (
@@ -129,11 +125,6 @@ const updateLead = async (id, organizationId, ownerId, payload) => {
           purposeOfPurchase, plotSize, budget, planToPurchase, siteVisit } = payload;
   if (status && !LEAD_STATUSES.includes(status)) {
     const error = new Error("Invalid lead status");
-    error.statusCode = 400;
-    throw error;
-  }
-  if (source && !LEAD_SOURCES.includes(source)) {
-    const error = new Error("Invalid lead source");
     error.statusCode = 400;
     throw error;
   }

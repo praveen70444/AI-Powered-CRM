@@ -683,10 +683,7 @@ function Leads() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Budget</label>
-              <select name="budget" defaultValue={activeLead?.budget || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                <option value="">— Select —</option>
-                {BUDGET_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <input type="text" name="budget" defaultValue={activeLead?.budget || ""} placeholder="e.g. 30 - 40 Lakhs" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Plan to Purchase</label>
@@ -716,9 +713,7 @@ function Leads() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Source</label>
-              <select name="source" defaultValue={activeLead?.source || LEAD_SOURCES[0]} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                {LEAD_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <input type="text" name="source" defaultValue={activeLead?.source || ""} placeholder="e.g. Instagram, Facebook" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Deal Value (₹)</label>

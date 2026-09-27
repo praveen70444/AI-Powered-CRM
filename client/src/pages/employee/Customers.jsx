@@ -396,15 +396,14 @@ function Customers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-4 py-3 font-medium">Photo</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Company</th>
-                <th className="px-4 py-3 font-medium">Industry</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Source / Since</th>
-                <th className="px-4 py-3 font-medium">Churn Risk</th>
+                <th className="px-4 py-3 font-medium">Venture</th>
+                <th className="px-4 py-3 font-medium">Phone No.</th>
+                <th className="px-4 py-3 font-medium">Flat No.</th>
+                <th className="px-4 py-3 font-medium">Total Sq. Ft.</th>
                 <th className="px-4 py-3 font-medium">Total Spend</th>
+                <th className="px-4 py-3 font-medium">Date of purchase</th>
+                <th className="px-4 py-3 font-medium">Payment Mode</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
@@ -416,32 +415,18 @@ function Customers() {
                   className="border-b border-gray-50 hover:bg-blue-50/30 cursor-pointer transition-colors group"
                 >
                   <td className="px-4 py-3">
-                    {customer.photoUrl ? (
-                      <img src={customer.photoUrl} alt={customer.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                        <Contact size={16} className="text-gray-400" />
-                      </div>
-                    )}
+                    <p className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">{customer.name}</p>
+                    <p className="text-xs text-gray-400">{customer.email}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <div>
-                        <p className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">{customer.name}</p>
-                        <p className="text-xs text-gray-400">{customer.email}</p>
-                      </div>
-                      <ChevronRight size={13} className="text-gray-300 group-hover:text-blue-400 transition-colors ml-1" />
-                    </div>
-                  </td>
+                  <td className="px-4 py-3 text-gray-600">{products.find(p => p.id == customer.mappedProductId)?.name || "—"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{customer.phone || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{customer.company}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{customer.industry || "—"}</td>
-                  <td className="px-4 py-3"><StatusBadge value={customer.status} /></td>
+                  <td className="px-4 py-3 text-gray-600">{customer.flatNo || "—"}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{customer.totalSqYd ? `${customer.totalSqYd} Sq. Yd.` : "—"}</td>
+                  <td className="px-4 py-3 text-gray-600 font-medium">₹{Number(customer.totalSpend).toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-xs text-gray-500">
-                    {customer.since ? new Date(customer.since).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
+                    {customer.since ? new Date(customer.since).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : new Date(customer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                   </td>
-                  <td className="px-4 py-3"><ChurnRiskBadge risk={customer.ai_churn_risk} /></td>
-                  <td className="px-4 py-3 text-gray-600">₹{Number(customer.totalSpend).toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{customer.paymentMode || "—"}</td>
                   <td className="px-4 py-3">
                     {/* Inline edit/delete — no 3-dot */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
