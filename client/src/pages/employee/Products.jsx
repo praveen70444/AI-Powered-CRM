@@ -122,11 +122,13 @@ function Products() {
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
                 <th className="px-6 py-3 font-medium">Photo</th>
-                <th className="px-6 py-3 font-medium">Product</th>
-                <th className="px-6 py-3 font-medium">SKU</th>
-                <th className="px-6 py-3 font-medium">Category</th>
-                <th className="px-6 py-3 font-medium">Unit Price</th>
-                <th className="px-6 py-3 font-medium">Cost Price</th>
+                <th className="px-6 py-3 font-medium">Venture Name</th>
+                <th className="px-6 py-3 font-medium">Features</th>
+                <th className="px-6 py-3 font-medium">Price / Sq. Yd.</th>
+                <th className="px-6 py-3 font-medium">Total Acres</th>
+                <th className="px-6 py-3 font-medium">Booking Advance</th>
+                <th className="px-6 py-3 font-medium">R/C</th>
+                <th className="px-6 py-3 font-medium">Pub Month Launched</th>
                 <th className="px-6 py-3 font-medium">Status</th>
                 <th className="px-6 py-3 font-medium" />
               </tr>
@@ -147,10 +149,12 @@ function Products() {
                     <p className="font-medium text-gray-900">{p.name}</p>
                     {p.description && <p className="text-xs text-gray-400 truncate max-w-xs">{p.description}</p>}
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{p.sku || "—"}</td>
-                  <td className="px-6 py-4 text-gray-600">{p.category || "—"}</td>
-                  <td className="px-6 py-4 font-medium text-gray-900">₹{Number(p.unitPrice).toLocaleString("en-IN")}</td>
-                  <td className="px-6 py-4 text-gray-600">{p.costPrice ? `₹${Number(p.costPrice).toLocaleString("en-IN")}` : "—"}</td>
+                  <td className="px-6 py-4 text-xs text-gray-600 truncate max-w-[150px]">{p.features || "—"}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">{p.pricePerSqYard ? `₹${Number(p.pricePerSqYard).toLocaleString("en-IN")}` : (p.unitPrice ? `₹${Number(p.unitPrice).toLocaleString("en-IN")}` : "—")}</td>
+                  <td className="px-6 py-4 text-gray-600">{p.totalAcres ? `${p.totalAcres} Acres` : "—"}</td>
+                  <td className="px-6 py-4 text-gray-600">{p.bookingAdvance ? `₹${Number(p.bookingAdvance).toLocaleString("en-IN")}` : "—"}</td>
+                  <td className="px-6 py-4 text-gray-600">{p.rC || p.r_c || "—"}</td>
+                  <td className="px-6 py-4 text-gray-600">{p.monthLaunched || "—"}</td>
                   <td className="px-6 py-4">
                     <StatusBadge value={p.isActive ? "Active" : "Inactive"} />
                   </td>

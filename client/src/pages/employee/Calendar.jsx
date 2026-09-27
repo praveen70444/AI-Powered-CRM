@@ -14,9 +14,10 @@ function Calendar() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeEvent, setActiveEvent] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [dayDetailOpen, setDayDetailOpen] = useState(false);
+  const [activeDay, setActiveDay] = useState(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -56,7 +57,13 @@ function Calendar() {
       start_time: buildLocalISO(year, month, day, 10),
       end_time: buildLocalISO(year, month, day, 11),
     });
+    setDayDetailOpen(false);
     setModalOpen(true);
+  }
+
+  function openDayDetail(day) {
+    setActiveDay(day);
+    setDayDetailOpen(true);
   }
 
   function openEdit(ev) {
@@ -68,6 +75,7 @@ function Calendar() {
       start_time: st ? new Date(st).toISOString().slice(0, 16) : "",
       end_time: et ? new Date(et).toISOString().slice(0, 16) : "",
     });
+    setDayDetailOpen(false);
     setModalOpen(true);
   }
 
@@ -138,7 +146,7 @@ function Calendar() {
             return (
               <div key={i}
                 className={`min-h-[96px] p-1.5 border-b border-r border-gray-100 last:border-r-0 ${day ? "cursor-pointer hover:bg-gray-50/70" : "bg-gray-50/30"} ${isToday(day) ? "bg-blue-50/40" : ""}`}
-                onClick={() => day && openAdd(day)}>
+                onClick={() => day && openDayDetail(day)}>
                 {day && (
                   <>
                     <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday(day) ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"}`}>
@@ -243,6 +251,44 @@ function Calendar() {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Day Detail Modal */}
+      <Modal open={dayDetailOpen} onClose={() => setDayDetailOpen(false)}
+        title={activeDay ? `${new Date(year, month, activeDay).toLocaleDateString("en-IN", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}` : ""}
+        footer={
+          <button onClick={() => openAdd(activeDay)} className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+            <Plus size={16} /> Add Event
+          </button>
+        }>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+          {activeDay && getEventsForDay(activeDay).length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-6">No events or tasks scheduled for this day.</p>
+          ) : activeDay && getEventsForDay(activeDay).map(ev => (
+            <div key={ev.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:border-blue-200 transition-colors cursor-pointer" onClick={() => openEdit(ev)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`w-2 h-2 rounded-full ${EVENT_COLORS[ev.event_type || ev.eventType] || "bg-gray-400"}`} />
+                    <p className="font-semibold text-gray-900 truncate">{ev.title}</p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${EVENT_COLORS[ev.event_type || ev.eventType] || "bg-gray-400"} text-white bg-opacity-90`}>{ev.event_type || ev.eventType}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2 font-medium">
+                    {new Date(ev.start_time || ev.startTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                    {!ev.is_all_day && !ev.isAllDay && " - "}
+                    {!ev.is_all_day && !ev.isAllDay && new Date(ev.end_time || ev.endTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                  {ev.description && (
+                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{ev.description}</p>
+                  )}
+                  {ev.location && (
+                    <p className="text-xs text-gray-400 mt-2">📍 {ev.location}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </Modal>
     </div>
   );

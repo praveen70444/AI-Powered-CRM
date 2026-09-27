@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Contact, AlertCircle, X, Plus, ChevronRight,
+  Contact, AlertCircle, X, Plus, ChevronRight, Send,
   Phone, Building2, IndianRupee, Calendar, Pencil, Trash2,
 } from "lucide-react";
 import ListToolbar from "../../components/employee/ListToolbar";
@@ -40,7 +40,7 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
   const [editingId, setEditingId] = useState(null);
   const [editNote, setEditNote] = useState("");
   const [editNext, setEditNext] = useState("");
-  const [tab, setTab] = useState("followups");
+  const [tab, setTab] = useState("notes");
 
   useEffect(() => {
     if (!customer) return;
@@ -96,6 +96,16 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
             <p className="text-xs text-gray-400 mt-0.5">{customer.company} · {customer.phone || "No phone"}</p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="relative group">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                <Send size={14} /> Send to Customer
+              </button>
+              <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-100 py-1 hidden group-hover:block z-10">
+                <button onClick={() => alert("WhatsApp integration pending")} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">WhatsApp</button>
+                <button onClick={() => alert("Email integration pending")} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">Email</button>
+                <button onClick={() => alert("SMS integration pending")} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">SMS</button>
+              </div>
+            </div>
             <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
               <Pencil size={15} />
             </button>
@@ -111,7 +121,7 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
         {/* Tabs */}
         <div className="flex border-b border-gray-100 px-6 shrink-0">
           {[
-            { key: "followups", label: `Follow-up History (${followups.length})` },
+            { key: "notes", label: `Customer Notes (${followups.length})` },
             { key: "details", label: "Details" },
           ].map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -123,22 +133,16 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {/* ── Follow-up Tab ── */}
-          {tab === "followups" && (
+          {/* ── Notes Tab ── */}
+          {tab === "notes" && (
             <div className="p-6 space-y-5">
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-medium text-emerald-700">Add Follow-up Note</p>
+                <p className="text-xs font-medium text-emerald-700">Add Note</p>
                 <textarea rows={3} value={newNote} onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="What was discussed? Any updates to customer status, requirements..."
+                  placeholder="Add a description, feedback, or general note about this customer..."
                   className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 bg-white resize-none"
                 />
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500">Next Follow-up Date</label>
-                    <input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)}
-                      className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                    />
-                  </div>
+                <div className="flex items-end justify-end gap-3">
                   <button onClick={addFollowup} disabled={saving || !newNote.trim()}
                     className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1.5"
                   >
@@ -148,9 +152,9 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
               </div>
 
               {loadingFollowups ? (
-                <p className="text-sm text-gray-400 text-center py-4">Loading history...</p>
+                <p className="text-sm text-gray-400 text-center py-4">Loading notes...</p>
               ) : followups.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">No follow-ups yet. Add the first one above.</p>
+                <p className="text-sm text-gray-400 text-center py-8">No notes yet. Add the first one above.</p>
               ) : (
                 <div className="space-y-3">
                   {followups.map((f) => (
@@ -160,12 +164,7 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
                           <textarea rows={3} value={editNote} onChange={(e) => setEditNote(e.target.value)}
                             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                           />
-                          <div>
-                            <label className="text-xs text-gray-500">Next Follow-up</label>
-                            <input type="date" value={editNext} onChange={(e) => setEditNext(e.target.value)}
-                              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                            />
-                          </div>
+
                           <div className="flex gap-2">
                             <button onClick={() => saveEdit(f)} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save</button>
                             <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
@@ -182,10 +181,7 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
                             </div>
                           </div>
                           <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Calendar size={11} /> {fmt(f.followupDate)}</span>
-                            {f.nextFollowupDate && (
-                              <span className="flex items-center gap-1 text-amber-600"><Calendar size={11} /> Next: {fmt(f.nextFollowupDate)}</span>
-                            )}
+                            <span className="flex items-center gap-1"><Calendar size={11} /> {fmt(f.followupDate || f.createdAt)}</span>
                             <span>by {f.author}</span>
                           </div>
                         </>

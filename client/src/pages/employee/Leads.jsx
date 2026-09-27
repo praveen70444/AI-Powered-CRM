@@ -566,14 +566,17 @@ function Leads() {
             </thead>
             <tbody>
               {pageItems.map((lead) => (
-                <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+                <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer group" onClick={(e) => {
+                  if (e.target.closest('td:last-child')) return; // Ignore clicks on the action menu column
+                  setDetailLead(lead);
+                }}>
                   <td className="px-4 py-3">
-                    <button onClick={() => setDetailLead(lead)} className="text-left group">
+                    <div>
                       <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">
-                        {lead.name} <ChevronRight size={12} className="text-gray-300 group-hover:text-blue-400" />
+                        {lead.name}
                       </p>
                       <p className="text-xs text-gray-400">{lead.company}</p>
-                    </button>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{lead.phone || "—"}</td>
                   <td className="px-4 py-3">
