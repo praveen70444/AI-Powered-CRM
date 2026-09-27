@@ -18,6 +18,7 @@ function Calendar() {
   const [error, setError] = useState("");
   const [dayDetailOpen, setDayDetailOpen] = useState(false);
   const [activeDay, setActiveDay] = useState(null);
+  const [activeEvent, setActiveEvent] = useState(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
