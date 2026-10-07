@@ -1,5 +1,6 @@
 const EMPLOYEE_ROLES = ["SALES_MANAGER", "SALES_EXECUTIVE", "SUPPORT_AGENT"];
 const ROLE_CATEGORY = {
+  SUPER_ADMIN: "SUPER_ADMIN",
   ORG_ADMIN: "ORG_ADMIN",
   SALES_MANAGER: "EMPLOYEE",
   SALES_EXECUTIVE: "EMPLOYEE",
@@ -25,14 +26,16 @@ const authorizeRoles = (...allowedCategories) => {
     next();
   };
 };
+const requireSuperAdmin = authorizeRoles("SUPER_ADMIN");
 const requireOrgAdmin = authorizeRoles("ORG_ADMIN");
 const requireEmployee = authorizeRoles("EMPLOYEE");
-const requireAnyRole = authorizeRoles("ORG_ADMIN", "EMPLOYEE");
+const requireAnyRole = authorizeRoles("ORG_ADMIN", "EMPLOYEE", "SUPER_ADMIN");
 module.exports = {
   EMPLOYEE_ROLES,
   getRoleCategory,
   isEmployeeRole,
   authorizeRoles,
+  requireSuperAdmin,
   requireOrgAdmin,
   requireEmployee,
   requireAnyRole,
