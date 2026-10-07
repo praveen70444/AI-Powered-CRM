@@ -5,6 +5,7 @@ import StatusBadge from "../../components/employee/StatusBadge";
 import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
+import IndustryLeadDetailPanel from "../../components/employee/IndustryLeadDetailPanel";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
@@ -20,6 +21,7 @@ const LEAD_CONFIG = {
       { name: "plot_size", label: "Plot Size", type: "text" },
       { name: "pincode", label: "Pincode", type: "text" },
       { name: "budget", label: "Budget", type: "text" },
+      { name: "plot_area_units", label: "Plot Area Units", type: "select", options: ["Sq. Yards", "Sq. Feet", "Acres", "Cents"] },
       { name: "timeline", label: "Timeline", type: "select", options: ["Immediately", "Within 1 Month", "Within 3 Months", "Within 6 Months"] }
     ]
   },
@@ -37,6 +39,7 @@ const LEAD_CONFIG = {
       { name: "plot_size", label: "Plot Size", type: "text" },
       { name: "pincode", label: "Pincode", type: "text" },
       { name: "budget", label: "Budget", type: "text" },
+      { name: "plot_area_units", label: "Plot Area Units", type: "select", options: ["Sq. Yards", "Sq. Feet", "Acres", "Cents"] },
       { name: "timeline", label: "Timeline", type: "select", options: ["Immediately", "Within 1 Month", "Within 3 Months", "Within 6 Months"] }
     ]
   },
@@ -51,6 +54,7 @@ const LEAD_CONFIG = {
       { name: "plot_size", label: "Plot Size", type: "text" },
       { name: "pincode", label: "Pincode", type: "text" },
       { name: "budget", label: "Budget", type: "text" },
+      { name: "plot_area_units", label: "Plot Area Units", type: "select", options: ["Sq. Yards", "Sq. Feet", "Acres", "Cents"] },
       { name: "timeline", label: "Timeline", type: "select", options: ["Immediately", "Within 1 Month", "Within 3 Months", "Within 6 Months"] }
     ]
   }
@@ -69,6 +73,7 @@ export default function IndustryLeads({ type }) {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeLead, setActiveLead] = useState(null);
+  const [detailLead, setDetailLead] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const fetchLeads = useCallback(async () => {
@@ -161,8 +166,8 @@ export default function IndustryLeads({ type }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                {config.fields.slice(0, 5).map(f => (
-                  <th key={f.name} className="px-4 py-3 font-medium">{f.label}</th>
+                {config.fields.map(f => (
+                  <th key={f.name} className="px-4 py-3 font-medium whitespace-nowrap">{f.label}</th>
                 ))}
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -170,16 +175,16 @@ export default function IndustryLeads({ type }) {
             </thead>
             <tbody>
               {pageItems.map(lead => (
-                <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                  {config.fields.slice(0, 5).map(f => (
-                    <td key={f.name} className="px-4 py-3 text-gray-600">
+                <tr key={lead.id} onClick={() => setDetailLead(lead)} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer">
+                  {config.fields.map(f => (
+                    <td key={f.name} className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {lead[f.name] || "—"}
                     </td>
                   ))}
                   <td className="px-4 py-3"><StatusBadge value={lead.status} /></td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => { setActiveLead(lead); setModalOpen(true); }} className="text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(lead.id)} className="text-red-600 hover:underline">Delete</button>
+                  <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                    <button onClick={(e) => { e.stopPropagation(); setActiveLead(lead); setModalOpen(true); }} className="text-blue-600 hover:underline">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}
@@ -222,6 +227,17 @@ export default function IndustryLeads({ type }) {
           </div>
         </form>
       </Modal>
+
+      {/* Side Panel for Notes/Updates */}
+      {detailLead && (
+        <IndustryLeadDetailPanel
+          lead={detailLead}
+          type={type}
+          config={config}
+          onClose={() => setDetailLead(null)}
+          onUpdated={fetchLeads}
+        />
+      )}
     </div>
   );
 }

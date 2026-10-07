@@ -117,3 +117,92 @@ module.exports = {
   updateLead,
   deleteLead
 };
+
+// --- Follow-ups ---
+
+const getFollowups = async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const result = await pool.query(
+      `SELECT f.*, u.name as author 
+       FROM industry_lead_followups f
+       LEFT JOIN users u ON f.author_id = u.id
+       WHERE f.lead_id = $1 AND f.lead_type = $2
+       ORDER BY f.created_at DESC`,
+      [id, type]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("Error fetching followups:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const createFollowup = async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { note, followupDate, nextFollowupDate } = req.body;
+    
+    const result = await pool.query(
+      `INSERT INTO industry_lead_followups (lead_id, lead_type, author_id, note, followup_date, next_followup_date)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [id, type, req.user.userId, note, followupDate || null, nextFollowupDate || null]
+    );
+
+    const userRes = await pool.query(`SELECT name FROM users WHERE id = $1`, [req.user.userId]);
+    const followup = result.rows[0];
+    followup.author = userRes.rows[0]?.name;
+
+    res.status(201).json({ success: true, data: followup });
+  } catch (error) {
+    console.error("Error creating followup:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const updateFollowup = async (req, res) => {
+  try {
+    const { id } = req.params; // followup id
+    const { note, followupDate, nextFollowupDate } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE industry_lead_followups
+       SET note = $1, followup_date = $2, next_followup_date = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [note, followupDate || null, nextFollowupDate || null, id]
+    );
+
+    const userRes = await pool.query(`SELECT name FROM users WHERE id = $1`, [result.rows[0].author_id]);
+    const followup = result.rows[0];
+    followup.author = userRes.rows[0]?.name;
+
+    res.json({ success: true, data: followup });
+  } catch (error) {
+    console.error("Error updating followup:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const deleteFollowup = async (req, res) => {
+  try {
+    const { id } = req.params; // followup id
+    await pool.query(`DELETE FROM industry_lead_followups WHERE id = $1`, [id]);
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    console.error("Error deleting followup:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+module.exports = {
+  getLeads,
+  createLead,
+  updateLead,
+  deleteLead,
+  getFollowups,
+  createFollowup,
+  updateFollowup,
+  deleteFollowup
+};
