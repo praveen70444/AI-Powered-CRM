@@ -36,7 +36,7 @@ const createLead = async (req, res) => {
     
     // Add org and owner
     fields.push('organization_id', 'owner_id');
-    values.push(req.user.organizationId, req.user.id);
+    values.push(req.user.organizationId, req.user.userId);
 
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
     

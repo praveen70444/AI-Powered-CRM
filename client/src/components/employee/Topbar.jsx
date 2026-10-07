@@ -4,8 +4,6 @@ import { Menu, Bell, ChevronDown, LogOut, UserCircle, Sparkles } from "lucide-re
 import { useAuth } from "../../context/AuthContext";
 import { getNotifications } from "../../services/employeeService";
 import GlobalSearch from "./GlobalSearch";
-import AISearchPanel from "../ai/AISearchPanel";
-
 const TITLES = {
   "/employee": "Dashboard",
   "/employee/leads": "Leads",
@@ -17,8 +15,6 @@ const TITLES = {
   "/employee/calendar": "Calendar",
   "/employee/analytics": "Analytics",
   "/employee/products": "Products",
-  "/employee/quotes": "Quotes",
-  "/employee/ai": "AI Insights",
 };
 
 function Topbar({ onMenuClick }) {
@@ -27,7 +23,6 @@ function Topbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [aiSearchOpen, setAiSearchOpen] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -76,15 +71,6 @@ function Topbar({ onMenuClick }) {
 
       {/* Right actions */}
       <div className="flex items-center gap-1.5">
-        {/* AI Search */}
-        <button
-          onClick={() => setAiSearchOpen(true)}
-          className="hidden sm:flex h-8 px-3 items-center gap-1.5 rounded-xl text-violet-600 hover:bg-violet-50 transition-colors border border-violet-200 text-xs font-semibold"
-        >
-          <Sparkles size={14} />
-          <span>AI</span>
-        </button>
-
         {/* Bell */}
         <button
           onClick={() => navigate("/employee/notifications")}
@@ -136,7 +122,6 @@ function Topbar({ onMenuClick }) {
         </div>
       </div>
 
-      {aiSearchOpen && <AISearchPanel onClose={() => setAiSearchOpen(false)} />}
     </header>
   );
 }

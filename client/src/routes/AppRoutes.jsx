@@ -31,7 +31,6 @@ import Profile from "../pages/employee/Profile";
 import Calendar from "../pages/employee/Calendar";
 import Analytics from "../pages/employee/Analytics";
 import Products from "../pages/employee/Products";
-import Quotes from "../pages/employee/Quotes";
 
 import SuperAdminLogin from "../pages/SuperAdminLogin";
 import SuperAdminLayout from "../components/super-admin/SuperAdminLayout";
@@ -93,7 +92,6 @@ function AppRoutes() {
           <Route path="calendar" element={<Calendar />} />
           <Route path="notes" element={<Notes />} />
           <Route path="products" element={<Products />} />
-          <Route path="quotes" element={<Quotes />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="profile" element={<Profile />} />

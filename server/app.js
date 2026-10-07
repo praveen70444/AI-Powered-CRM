@@ -86,8 +86,7 @@ app.use("/api/employee", employeeRoutes);
 // Super admin routes
 app.use("/api/super-admin", superAdminRoutes);
 
-// AI routes (employee-scoped)
-app.use("/api/ai", aiLimiter, aiRoutes);
+// AI routes removed for now
 
 // ── SPA fallback ─────────────────────────────────────────────────────────────
 // Serve the React build when the frontend is bundled into the server deploy.

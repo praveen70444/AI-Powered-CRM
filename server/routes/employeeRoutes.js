@@ -208,14 +208,7 @@ router.get("/products/:id", getProductById);
 router.put("/products/:id", updateProduct);
 router.delete("/products/:id", deleteProduct);
 
-// Quotes
-router.get("/quotes", getQuotes);
-router.post("/quotes", createQuote);
-router.get("/quotes/:id", getQuoteById);
-router.put("/quotes/:id", updateQuote);
-router.delete("/quotes/:id", deleteQuote);
-router.post("/quotes/:id/line-items", addLineItem);
-router.delete("/quotes/:quoteId/line-items/:itemId", removeLineItem);
+// Quotes routes removed for now
 
 // Calendar
 router.get("/calendar", getEvents);
