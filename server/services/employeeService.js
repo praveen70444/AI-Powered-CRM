@@ -68,8 +68,28 @@ const getEmployeeDashboard = async (userId, organizationId) => {
     error.statusCode = 404;
     throw error;
   }
-  const summaryResult = await pool.query(
-    `
+  const orgRes = await pool.query(`SELECT industry FROM organizations WHERE id = $1`, [organizationId]);
+  const industry = orgRes.rows[0]?.industry;
+  const isConstruction = industry === 'Construction';
+
+  let summaryQuery = ``;
+  if (isConstruction) {
+    summaryQuery = `
+    SELECT
+      ((SELECT COUNT(*) FROM construction_leads WHERE organization_id = $1 AND owner_id = $2) +
+       (SELECT COUNT(*) FROM redevelopment_leads WHERE organization_id = $1 AND owner_id = $2) +
+       (SELECT COUNT(*) FROM maintenance_leads WHERE organization_id = $1 AND owner_id = $2)) AS total_leads,
+      ((SELECT COUNT(*) FROM construction_leads WHERE organization_id = $1 AND owner_id = $2 AND status = 'New') +
+       (SELECT COUNT(*) FROM redevelopment_leads WHERE organization_id = $1 AND owner_id = $2 AND status = 'New') +
+       (SELECT COUNT(*) FROM maintenance_leads WHERE organization_id = $1 AND owner_id = $2 AND status = 'New')) AS new_leads,
+      (SELECT COUNT(*) FROM customers WHERE organization_id = $1 AND owner_id = $2) AS total_customers,
+      (SELECT COUNT(*) FROM deals WHERE organization_id = $1 AND owner_id = $2 AND stage NOT IN ('Won', 'Lost')) AS active_deals,
+      (SELECT COUNT(*) FROM tasks WHERE organization_id = $1 AND owner_id = $2 AND status != 'Completed') AS pending_tasks,
+      (SELECT COUNT(*) FROM deals WHERE organization_id = $1 AND owner_id = $2 AND stage = 'Won') AS won_deals,
+      (SELECT COALESCE(SUM(value), 0) FROM deals WHERE organization_id = $1 AND owner_id = $2 AND stage = 'Won') AS revenue
+    `;
+  } else {
+    summaryQuery = `
     SELECT
       (SELECT COUNT(*) FROM leads WHERE organization_id = $1 AND owner_id = $2) AS total_leads,
       (SELECT COUNT(*) FROM leads WHERE organization_id = $1 AND owner_id = $2 AND status = 'New') AS new_leads,
@@ -78,21 +98,29 @@ const getEmployeeDashboard = async (userId, organizationId) => {
       (SELECT COUNT(*) FROM tasks WHERE organization_id = $1 AND owner_id = $2 AND status != 'Completed') AS pending_tasks,
       (SELECT COUNT(*) FROM deals WHERE organization_id = $1 AND owner_id = $2 AND stage = 'Won') AS won_deals,
       (SELECT COALESCE(SUM(value), 0) FROM deals WHERE organization_id = $1 AND owner_id = $2 AND stage = 'Won') AS revenue
-    `,
-    [organizationId, userId]
-  );
+    `;
+  }
+
+  const summaryResult = await pool.query(summaryQuery, [organizationId, userId]);
   const summaryRow = summaryResult.rows[0];
-  const leadsBySourceResult = await pool.query(
-    `
-    SELECT source, COUNT(*) AS count
-    FROM leads
-    WHERE organization_id = $1
-      AND owner_id = $2
-      AND source IS NOT NULL
-    GROUP BY source
-    `,
-    [organizationId, userId]
-  );
+
+  let leadsBySourceResult;
+  if (isConstruction) {
+    // Return empty for source since industry leads don't have source
+    leadsBySourceResult = { rows: [] };
+  } else {
+    leadsBySourceResult = await pool.query(
+      `
+      SELECT source, COUNT(*) AS count
+      FROM leads
+      WHERE organization_id = $1
+        AND owner_id = $2
+        AND source IS NOT NULL
+      GROUP BY source
+      `,
+      [organizationId, userId]
+    );
+  }
   const dealsByStageResult = await pool.query(
     `
     SELECT stage, COUNT(*) AS count
