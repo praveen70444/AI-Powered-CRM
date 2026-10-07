@@ -10,7 +10,6 @@ import ExportMenu from "../../components/employee/ExportMenu";
 import ConvertLeadModal from "../../components/employee/ConvertLeadModal";
 import RowActions from "../../components/employee/RowActions";
 import TagsInput from "../../components/employee/TagsInput";
-import TagsInput from "../../components/employee/TagsInput";
 import { LEAD_STATUSES, LEAD_SOURCES } from "../../mock/leads";
 import {
   getLeads, createLead, updateLead, deleteLead,
