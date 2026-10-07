@@ -9,6 +9,7 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const passwordRoutes = require("./routes/passwordRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const superAdminRoutes = require("./routes/superAdminRoutes");
 const authenticate = require("./middleware/authMiddleware");
 const {
   helmetConfig,
@@ -81,6 +82,9 @@ app.use("/api/organization", organizationRoutes);
 
 // Employee CRM routes
 app.use("/api/employee", employeeRoutes);
+
+// Super admin routes
+app.use("/api/super-admin", superAdminRoutes);
 
 // AI routes (employee-scoped)
 app.use("/api/ai", aiLimiter, aiRoutes);

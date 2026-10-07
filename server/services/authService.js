@@ -85,15 +85,18 @@ const loginUser = async ({ email, password, ipAddress, userAgent }) => {
   const result = await pool.query(
     `
     SELECT
-      id,
-      organization_id,
-      name,
-      email,
-      password_hash,
-      role,
-      status
-    FROM users
-    WHERE email = $1
+      u.id,
+      u.organization_id,
+      u.name,
+      u.email,
+      u.password_hash,
+      u.role,
+      u.status,
+      o.industry as organization_industry
+    FROM users u
+    LEFT JOIN organizations o ON o.id = u.organization_id
+    WHERE u.email = $1
+    
     `,
     [email]
   );
@@ -188,6 +191,7 @@ const loginUser = async ({ email, password, ipAddress, userAgent }) => {
       email: user.email,
       role: user.role,
       status: user.status,
+      organizationIndustry: user.organization_industry,
     },
   };
 };

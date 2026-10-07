@@ -12,8 +12,10 @@ function ProtectedRoute({ children, allowedRoles }) {
       (allowedRoles.includes("EMPLOYEE") &&
         EMPLOYEE_ROLES.includes(user.role));
     if (!isAllowed) {
-      const fallback =
-        user.role === "ORG_ADMIN" ? "/organization" : "/employee";
+      let fallback = "/employee";
+      if (user.role === "SUPER_ADMIN") fallback = "/super-admin";
+      else if (user.role === "ORG_ADMIN") fallback = "/organization";
+      
       return <Navigate to={fallback} replace />;
     }
   }

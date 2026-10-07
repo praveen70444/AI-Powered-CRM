@@ -102,6 +102,7 @@ const {
   updateFollowup: updateCustFollowup,
   deleteFollowup: deleteCustFollowup,
 } = require("../controllers/customerFollowupController");
+const industryLeadsController = require("../controllers/industryLeadsController");
 const authMiddleware = require("../middleware/authMiddleware");
 const { requireEmployee } = require("../middleware/roleMiddleware");
 const router = express.Router();
@@ -136,6 +137,12 @@ router.put("/leads/:id", updateLead);
 router.delete("/leads/:id", deleteLead);
 router.post("/leads/:id/convert", convertLead);
 router.get("/leads/:id/conversion-history", getConversionHistory);
+
+// Industry specific leads (Construction, Redevelopment, Maintenance)
+router.get("/industry-leads/:type", industryLeadsController.getLeads);
+router.post("/industry-leads/:type", industryLeadsController.createLead);
+router.put("/industry-leads/:type/:id", industryLeadsController.updateLead);
+router.delete("/industry-leads/:type/:id", industryLeadsController.deleteLead);
 
 // Lead follow-ups
 router.get("/leads/:leadId/followups", getFollowups);

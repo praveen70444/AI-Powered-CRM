@@ -6,11 +6,30 @@ import {
   Package, FileText, Sparkles, Building2,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+const STANDARD_NAV_ITEMS = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/employee/ai", label: "AI Insights", icon: Sparkles, ai: true },
   { to: "/employee/leads", label: "Leads", icon: Users },
   { to: "/employee/customers", label: "Customers", icon: Contact },
+  { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
+  { to: "/employee/tasks", label: "Tasks", icon: ListChecks },
+  { to: "/employee/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/employee/notes", label: "Notes", icon: StickyNote },
+  { to: "/employee/products", label: "Products", icon: Package },
+  { to: "/employee/quotes", label: "Quotes", icon: FileText },
+  { to: "/employee/analytics", label: "Analytics", icon: TrendingUp },
+  { to: "/employee/notifications", label: "Notifications", icon: Bell },
+  { to: "/employee/profile", label: "Profile", icon: UserCircle },
+];
+
+const CONSTRUCTION_NAV_ITEMS = [
+  { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/employee/ai", label: "AI Insights", icon: Sparkles, ai: true },
+  { to: "/employee/construction-leads", label: "Construction Leads", icon: Users },
+  { to: "/employee/redevelopment-leads", label: "Redevelopment Leads", icon: Building2 },
+  { to: "/employee/maintenance-leads", label: "Maintenance Leads", icon: ListChecks },
+  { to: "/employee/customers", label: "Customers", icon: Contact },
+  { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
   { to: "/employee/tasks", label: "Tasks", icon: ListChecks },
   { to: "/employee/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/employee/notes", label: "Notes", icon: StickyNote },
@@ -70,7 +89,7 @@ function Sidebar({ open, onClose }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
-          {NAV_ITEMS.map((item) => (
+          {(user?.organizationIndustry === 'Construction' ? CONSTRUCTION_NAV_ITEMS : STANDARD_NAV_ITEMS).map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
