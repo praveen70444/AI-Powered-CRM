@@ -196,6 +196,52 @@ const deleteFollowup = async (req, res) => {
   }
 };
 
+const convertLead = async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { industry, notes, createDeal, dealTitle, dealValue } = req.body;
+    const tableName = getTableName(type);
+    if (!tableName) return res.status(400).json({ success: false, message: "Invalid lead type" });
+
+    // 1. Get lead
+    const leadRes = await pool.query(`SELECT * FROM ${tableName} WHERE id = $1 AND organization_id = $2`, [id, req.user.organizationId]);
+    const lead = leadRes.rows[0];
+    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+    if (lead.status === 'Converted') return res.status(400).json({ success: false, message: "Already converted" });
+
+    await pool.query("BEGIN");
+
+    // 2. Create customer
+    const custRes = await pool.query(
+      `INSERT INTO customers (organization_id, owner_id, name, email, phone, company, industry, status, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [req.user.organizationId, req.user.userId, lead.name, null, lead.whatsapp_number, null, industry || type, 'Active', notes || null]
+    );
+    const customer = custRes.rows[0];
+
+    // 3. Update lead status
+    await pool.query(`UPDATE ${tableName} SET status = 'Converted', updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [id]);
+
+    // 4. Optionally create deal
+    let deal = null;
+    if (createDeal) {
+      const dealRes = await pool.query(
+        `INSERT INTO deals (organization_id, owner_id, customer_id, title, value, stage)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [req.user.organizationId, req.user.userId, customer.id, dealTitle, dealValue || 0, 'Discovery']
+      );
+      deal = dealRes.rows[0];
+    }
+
+    await pool.query("COMMIT");
+    res.json({ success: true, data: { customer, deal } });
+  } catch (error) {
+    await pool.query("ROLLBACK");
+    console.error("Error converting industry lead:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 module.exports = {
   getLeads,
   createLead,
@@ -204,5 +250,6 @@ module.exports = {
   getFollowups,
   createFollowup,
   updateFollowup,
-  deleteFollowup
+  deleteFollowup,
+  convertLead
 };

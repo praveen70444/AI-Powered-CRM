@@ -6,6 +6,7 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import IndustryLeadDetailPanel from "../../components/employee/IndustryLeadDetailPanel";
+import ConvertIndustryLeadModal from "../../components/employee/ConvertIndustryLeadModal";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
@@ -74,6 +75,7 @@ export default function IndustryLeads({ type }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeLead, setActiveLead] = useState(null);
   const [detailLead, setDetailLead] = useState(null);
+  const [convertTarget, setConvertTarget] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const fetchLeads = useCallback(async () => {
@@ -183,6 +185,9 @@ export default function IndustryLeads({ type }) {
                   ))}
                   <td className="px-4 py-3"><StatusBadge value={lead.status} /></td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                    {lead.status !== "Converted" && (
+                      <button onClick={(e) => { e.stopPropagation(); setConvertTarget(lead); }} className="text-green-600 hover:underline">Convert to Customer</button>
+                    )}
                     <button onClick={(e) => { e.stopPropagation(); setActiveLead(lead); setModalOpen(true); }} className="text-blue-600 hover:underline">Edit</button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="text-red-600 hover:underline">Delete</button>
                   </td>
@@ -238,6 +243,18 @@ export default function IndustryLeads({ type }) {
           onUpdated={fetchLeads}
         />
       )}
+
+      {/* Convert Modal */}
+      <ConvertIndustryLeadModal
+        open={!!convertTarget}
+        lead={convertTarget}
+        type={type}
+        onClose={() => setConvertTarget(null)}
+        onConverted={() => {
+          setConvertTarget(null);
+          fetchLeads();
+        }}
+      />
     </div>
   );
 }

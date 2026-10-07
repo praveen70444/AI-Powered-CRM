@@ -144,6 +144,8 @@ router.post("/industry-leads/:type", industryLeadsController.createLead);
 router.put("/industry-leads/:type/:id", industryLeadsController.updateLead);
 router.delete("/industry-leads/:type/:id", industryLeadsController.deleteLead);
 
+router.post("/industry-leads/:type/:id/convert", industryLeadsController.convertLead);
+
 router.get("/industry-leads/:type/:id/followups", industryLeadsController.getFollowups);
 router.post("/industry-leads/:type/:id/followups", industryLeadsController.createFollowup);
 router.put("/industry-leads/:type/followups/:id", industryLeadsController.updateFollowup);
