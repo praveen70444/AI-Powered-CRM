@@ -111,6 +111,7 @@ const { getOwnersDetail, createOwnerDetail, updateOwnerDetail, deleteOwnerDetail
 const { getSubcontractors, createSubcontractor, updateSubcontractor, deleteSubcontractor } = require("../controllers/subcontractorsController");
 const { getMaterialSuppliers, createMaterialSupplier, updateMaterialSupplier, deleteMaterialSupplier } = require("../controllers/materialSuppliersController");
 const { getConstructionCustomers, createConstructionCustomer, updateConstructionCustomer, deleteConstructionCustomer } = require("../controllers/constructionCustomersController");
+const authMiddleware = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 const router = express.Router();
 router.use(authMiddleware, authorizeRoles("EMPLOYEE", "ORG_ADMIN"));
