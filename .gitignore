@@ -7,3 +7,8 @@ dist/
 .env.*
 !.env.example
 .history/
+
+server/.env
+.env
+.env.*
+node_modules/

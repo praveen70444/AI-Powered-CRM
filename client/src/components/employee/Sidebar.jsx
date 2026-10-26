@@ -1,36 +1,43 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  LayoutDashboard, Users, Contact, KanbanSquare, ListChecks, History,
+  LayoutDashboard, Users, Contact, ListChecks, History,
   StickyNote, Bell, UserCircle, LogOut, X, CalendarDays, TrendingUp,
-  Package, FileText, Sparkles, Building2,
+  Package, FileText, Sparkles, Building2, MapPin, Hammer, ShoppingCart, UserCheck,
 } from "lucide-react";
 
+// A1: Deals removed from both verticals.
+// B3: Products → Ventures for Real Estate.
+// B4: Owners Detail added for Real Estate.
 const STANDARD_NAV_ITEMS = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/employee/leads", label: "Leads", icon: Users },
   { to: "/employee/customers", label: "Customers", icon: Contact },
-  { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
   { to: "/employee/tasks", label: "Tasks", icon: ListChecks },
   { to: "/employee/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/employee/notes", label: "Notes", icon: StickyNote },
-  { to: "/employee/products", label: "Products", icon: Package },
+  { to: "/employee/products", label: "Ventures", icon: Building2 },
+  { to: "/employee/owners-detail", label: "Owners Detail", icon: MapPin },
   { to: "/employee/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/employee/notifications", label: "Notifications", icon: Bell },
   { to: "/employee/profile", label: "Profile", icon: UserCircle },
 ];
 
+// A1: Deals removed from Construction.
+// C1: Subcontractors added.
+// C2: Material Suppliers added.
+// C3: Construction Customers added (replaces generic Customers for construction).
 const CONSTRUCTION_NAV_ITEMS = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/employee/construction-leads", label: "Construction Leads", icon: Users },
   { to: "/employee/redevelopment-leads", label: "Redevelopment Leads", icon: Building2 },
   { to: "/employee/maintenance-leads", label: "Maintenance Leads", icon: ListChecks },
-  { to: "/employee/customers", label: "Customers", icon: Contact },
-  { to: "/employee/deals", label: "Deals", icon: KanbanSquare },
+  { to: "/employee/construction-customers", label: "Customers", icon: Contact },
+  { to: "/employee/subcontractors", label: "Subcontractors", icon: Hammer },
+  { to: "/employee/material-suppliers", label: "Material Suppliers", icon: ShoppingCart },
   { to: "/employee/tasks", label: "Tasks", icon: ListChecks },
   { to: "/employee/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/employee/notes", label: "Notes", icon: StickyNote },
-  { to: "/employee/products", label: "Products", icon: Package },
   { to: "/employee/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/employee/notifications", label: "Notifications", icon: Bell },
   { to: "/employee/profile", label: "Profile", icon: UserCircle },

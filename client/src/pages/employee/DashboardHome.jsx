@@ -283,31 +283,25 @@ function DashboardHome() {
   return (
     <div className="space-y-6">
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         <StatCard icon={Users}        label="Total Leads"      value={summary.totalLeads}                        accent="blue" />
         <StatCard icon={UserPlus}     label="New Leads"        value={summary.newLeads}                          accent="violet" />
         <StatCard icon={Contact}      label="Total Customers"  value={summary.totalCustomers}                    accent="emerald" />
-        <StatCard icon={KanbanSquare} label="Active Deals"     value={summary.activeDeals}                       accent="amber" />
         <StatCard icon={ListChecks}   label="Pending Tasks"    value={summary.pendingTasks}                      accent="red"
           onClick={() => navigate("/employee/tasks")}
           className="cursor-pointer hover:ring-2 hover:ring-red-200 transition-all"
         />
-        <StatCard icon={Trophy}       label="Won Deals"        value={summary.wonDeals}                          accent="emerald" />
         <StatCard icon={IndianRupee}  label="Revenue"          value={formatCurrency(summary.revenue)}           accent="blue" />
       </div>
 
       {/* Charts row */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+      <div className="grid lg:grid-cols-1 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-900">Revenue Trend</h3>
             <span className="text-xs text-gray-400">Last 6 months</span>
           </div>
           <BarChart data={revenueTrend} valueFormatter={formatCurrency} />
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Deals by Stage</h3>
-          <DonutChart data={dealsByStage} />
         </div>
       </div>
 

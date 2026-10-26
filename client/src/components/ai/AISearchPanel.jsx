@@ -44,7 +44,6 @@ const AISearchPanel = ({ onClose }) => {
     const routes = {
       leads: `/employee/leads`,
       customers: `/employee/customers`,
-      deals: `/employee/deals`,
       tasks: `/employee/tasks`,
     };
     
@@ -58,7 +57,6 @@ const AISearchPanel = ({ onClose }) => {
     const labels = {
       leads: "Lead",
       customers: "Customer",
-      deals: "Deal",
       tasks: "Task",
     };
     return labels[entity] || entity;

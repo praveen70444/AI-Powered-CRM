@@ -2,10 +2,11 @@ const leadService = require("../services/leadService");
 const leadConversionService = require("../services/leadConversionService");
 const getLeads = async (req, res) => {
   try {
-    const { userId, organizationId } = req.user;
-    const { page = 1, limit = 50, search = '', status = '', source = '' } = req.query;
-    const result = await leadService.getLeads(organizationId, userId, {
-      page: parseInt(page), limit: Math.min(parseInt(limit), 200), search, status, source,
+    const { userId, organizationId, role } = req.user;
+    const { page = 1, limit = 50, search = '', status = '', source = '', language = '', lead_type = '' } = req.query;
+    const filterUserId = role === "ORG_ADMIN" ? null : userId;
+    const result = await leadService.getLeads(organizationId, filterUserId, {
+      page: parseInt(page), limit: Math.min(parseInt(limit), 200), search, status, source, language, lead_type,
     });
     res.status(200).json({ success: true, message: "Leads fetched successfully", ...result });
   } catch (error) {

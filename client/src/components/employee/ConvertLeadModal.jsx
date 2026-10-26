@@ -117,43 +117,6 @@ function ConvertLeadModal({ open, lead, onClose, onConverted }) {
               className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
             />
           </div>
-
-          {/* Create deal option */}
-          <div className="border border-gray-200 rounded-lg p-3 space-y-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={createDeal}
-                onChange={(e) => setCreateDeal(e.target.checked)}
-                className="w-4 h-4 rounded accent-blue-600"
-              />
-              <span className="text-sm font-medium text-gray-700">Also create a Deal</span>
-            </label>
-
-            {createDeal && (
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="col-span-2">
-                  <label className="text-xs font-medium text-gray-500">Deal Title</label>
-                  <input
-                    value={dealTitle}
-                    onChange={(e) => setDealTitle(e.target.value)}
-                    placeholder={`Deal with ${lead.company}`}
-                    className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500">Deal Value (₹)</label>
-                  <input
-                    type="number"
-                    value={dealValue}
-                    onChange={(e) => setDealValue(e.target.value)}
-                    placeholder={lead.value}
-                    className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
         </form>
       )}
     </Modal>

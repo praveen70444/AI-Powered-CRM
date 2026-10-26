@@ -19,6 +19,20 @@ const PAGE_TITLES = {
   "/organization/webhooks": "Webhooks & API",
   "/organization/custom-fields": "Custom Fields",
   "/organization/ai-settings": "AI Settings",
+  "/organization/leads": "Real Estate Leads",
+  "/organization/products": "Ventures",
+  "/organization/ventures": "Ventures",
+  "/organization/owners-detail": "Owners Detail",
+  "/organization/customers": "Customers",
+  "/organization/construction-leads": "Construction Leads",
+  "/organization/redevelopment-leads": "Redevelopment Leads",
+  "/organization/maintenance-leads": "Maintenance Leads",
+  "/organization/construction-customers": "Construction Customers",
+  "/organization/subcontractors": "Subcontractors",
+  "/organization/material-suppliers": "Material Suppliers",
+  "/organization/tasks": "Tasks",
+  "/organization/calendar": "Calendar",
+  "/organization/analytics": "Analytics",
 };
 
 function NotificationBell() {

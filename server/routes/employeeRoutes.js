@@ -103,10 +103,17 @@ const {
   deleteFollowup: deleteCustFollowup,
 } = require("../controllers/customerFollowupController");
 const industryLeadsController = require("../controllers/industryLeadsController");
-const authMiddleware = require("../middleware/authMiddleware");
-const { requireEmployee } = require("../middleware/roleMiddleware");
+const {
+  getDropdownOptions, seedDropdownOptions, createDropdownOption,
+  updateDropdownOption, deleteDropdownOption,
+} = require("../controllers/dropdownController");
+const { getOwnersDetail, createOwnerDetail, updateOwnerDetail, deleteOwnerDetail } = require("../controllers/ownersDetailController");
+const { getSubcontractors, createSubcontractor, updateSubcontractor, deleteSubcontractor } = require("../controllers/subcontractorsController");
+const { getMaterialSuppliers, createMaterialSupplier, updateMaterialSupplier, deleteMaterialSupplier } = require("../controllers/materialSuppliersController");
+const { getConstructionCustomers, createConstructionCustomer, updateConstructionCustomer, deleteConstructionCustomer } = require("../controllers/constructionCustomersController");
+const { authorizeRoles } = require("../middleware/roleMiddleware");
 const router = express.Router();
-router.use(authMiddleware, requireEmployee);
+router.use(authMiddleware, authorizeRoles("EMPLOYEE", "ORG_ADMIN"));
 
 router.get("/dashboard", getDashboard);
 router.get("/profile", getProfile);
@@ -235,5 +242,36 @@ router.delete("/tags/:entityType/:entityId/:tagId", removeTagFromEntity);
 router.get("/custom-fields", getCustomFields);
 router.get("/custom-field-values/:entityType/:entityId", getCustomFieldValues);
 router.post("/custom-field-values/:entityType/:entityId", upsertCustomFieldValues);
+
+// Dropdown options (editable dropdowns)
+router.get("/dropdowns", getDropdownOptions);
+router.post("/dropdowns/seed", seedDropdownOptions);
+router.post("/dropdowns", createDropdownOption);
+router.put("/dropdowns/:id", updateDropdownOption);
+router.delete("/dropdowns/:id", deleteDropdownOption);
+
+// Owners Detail (Real Estate)
+router.get("/owners-detail", getOwnersDetail);
+router.post("/owners-detail", createOwnerDetail);
+router.put("/owners-detail/:id", updateOwnerDetail);
+router.delete("/owners-detail/:id", deleteOwnerDetail);
+
+// Subcontractors (Construction)
+router.get("/subcontractors", getSubcontractors);
+router.post("/subcontractors", createSubcontractor);
+router.put("/subcontractors/:id", updateSubcontractor);
+router.delete("/subcontractors/:id", deleteSubcontractor);
+
+// Material Suppliers (Construction)
+router.get("/material-suppliers", getMaterialSuppliers);
+router.post("/material-suppliers", createMaterialSupplier);
+router.put("/material-suppliers/:id", updateMaterialSupplier);
+router.delete("/material-suppliers/:id", deleteMaterialSupplier);
+
+// Construction Customers (Construction)
+router.get("/construction-customers", getConstructionCustomers);
+router.post("/construction-customers", createConstructionCustomer);
+router.put("/construction-customers/:id", updateConstructionCustomer);
+router.delete("/construction-customers/:id", deleteConstructionCustomer);
 
 module.exports = router;

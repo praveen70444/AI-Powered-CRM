@@ -16,18 +16,22 @@ const mapProduct = (row) => ({
   bookingAdvance: row.booking_advance ? Number(row.booking_advance) : null,
   rC: row.r_c,
   monthLaunched: row.month_launched,
+  village: row.village,
+  minPlotSize: row.min_plot_size,
+  min_plot_size: row.min_plot_size,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
 
-const getProducts = async (organizationId, { page = 1, limit = 50, search = '', category = '', isActive = '' } = {}) => {
+const getProducts = async (organizationId, { page = 1, limit = 50, search = '', category = '', isActive = '', village = '' } = {}) => {
   const offset = (page - 1) * limit;
   const conditions = ['organization_id = $1'];
   const params = [organizationId];
   let idx = 2;
 
-  if (search) { conditions.push(`(name ILIKE $${idx} OR sku ILIKE $${idx} OR category ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
+  if (search) { conditions.push(`(name ILIKE $${idx} OR sku ILIKE $${idx} OR category ILIKE $${idx} OR village ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
   if (category) { conditions.push(`category = $${idx}`); params.push(category); idx++; }
+  if (village) { conditions.push(`village ILIKE $${idx}`); params.push(`%${village}%`); idx++; }
   if (isActive !== '') { conditions.push(`is_active = $${idx}`); params.push(isActive === 'true'); idx++; }
 
   const where = conditions.join(' AND ');
@@ -54,31 +58,40 @@ const getProductById = async (id, organizationId) => {
 
 const createProduct = async (organizationId, userId, payload) => {
   const { name, description, sku, category, unit_price, cost_price, is_active = true, photo_url,
-          features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched } = payload;
+          features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched,
+          village, min_plot_size, minPlotSize } = payload;
   if (!name) { const e = new Error('Product name is required'); e.statusCode = 400; throw e; }
+  const plotSizeVal = min_plot_size || minPlotSize || null;
   const result = await pool.query(
     `INSERT INTO products (organization_id, name, description, sku, category, unit_price, cost_price, is_active, photo_url, created_by,
-      features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched, village, min_plot_size)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
     [organizationId, name, description || null, sku || null, category || null, Number(unit_price) || 0, cost_price ? Number(cost_price) : null, is_active, photo_url || null, userId,
-     features || null, price_per_sq_yard ? Number(price_per_sq_yard) : null, total_acres ? Number(total_acres) : null, booking_advance ? Number(booking_advance) : null, r_c || null, month_launched || null]
+     features || null, price_per_sq_yard ? Number(price_per_sq_yard) : null, total_acres ? Number(total_acres) : null, booking_advance ? Number(booking_advance) : null, r_c || null, month_launched || null,
+     village || null, plotSizeVal]
   );
   return mapProduct(result.rows[0]);
 };
 
 const updateProduct = async (id, organizationId, payload) => {
   const { name, description, sku, category, unit_price, cost_price, is_active, photo_url,
-          features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched } = payload;
+          features, price_per_sq_yard, total_acres, booking_advance, r_c, month_launched,
+          village, min_plot_size, minPlotSize } = payload;
+  const plotSizeVal = min_plot_size !== undefined ? min_plot_size : minPlotSize;
   const result = await pool.query(
     `UPDATE products SET name=COALESCE($1,name), description=COALESCE($2,description), sku=COALESCE($3,sku),
      category=COALESCE($4,category), unit_price=COALESCE($5,unit_price), cost_price=COALESCE($6,cost_price),
      is_active=COALESCE($7,is_active), photo_url=COALESCE($8,photo_url),
      features=COALESCE($9,features), price_per_sq_yard=COALESCE($10,price_per_sq_yard), total_acres=COALESCE($11,total_acres),
      booking_advance=COALESCE($12,booking_advance), r_c=COALESCE($13,r_c), month_launched=COALESCE($14,month_launched),
+     village=CASE WHEN $15 THEN $16 ELSE village END,
+     min_plot_size=CASE WHEN $17 THEN $18 ELSE min_plot_size END,
      updated_at=CURRENT_TIMESTAMP
-     WHERE id=$15 AND organization_id=$16 RETURNING *`,
+     WHERE id=$19 AND organization_id=$20 RETURNING *`,
     [name||null, description||null, sku||null, category||null, unit_price!=null?Number(unit_price):null, cost_price!=null?Number(cost_price):null, is_active!=null?is_active:null, photo_url||null,
      features||null, price_per_sq_yard!=null?Number(price_per_sq_yard):null, total_acres!=null?Number(total_acres):null, booking_advance!=null?Number(booking_advance):null, r_c||null, month_launched||null,
+     village !== undefined, village || null,
+     plotSizeVal !== undefined, plotSizeVal || null,
      id, organizationId]
   );
   if (!result.rows[0]) { const e = new Error('Product not found'); e.statusCode = 404; throw e; }

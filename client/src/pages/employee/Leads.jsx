@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { Users, AlertCircle, X, Plus, Upload, ChevronRight, Phone, Calendar, Building2, Target, IndianRupee, MapPin, Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  Users, AlertCircle, X, Plus, Upload, ChevronRight, Phone, Calendar,
+  Building2, Target, IndianRupee, MapPin, Eye, Pencil, Trash2, Globe, Home
+} from "lucide-react";
 import ListToolbar from "../../components/employee/ListToolbar";
 import FilterSelect from "../../components/employee/FilterSelect";
 import StatusBadge from "../../components/employee/StatusBadge";
@@ -10,6 +13,9 @@ import ExportMenu from "../../components/employee/ExportMenu";
 import ConvertLeadModal from "../../components/employee/ConvertLeadModal";
 import RowActions from "../../components/employee/RowActions";
 import TagsInput from "../../components/employee/TagsInput";
+import EditableSelect from "../../components/employee/EditableSelect";
+import EditableMultiSelect from "../../components/employee/EditableMultiSelect";
+import { useAuth } from "../../context/AuthContext";
 import { LEAD_STATUSES, LEAD_SOURCES } from "../../mock/leads";
 import {
   getLeads, createLead, updateLead, deleteLead,
@@ -19,21 +25,8 @@ import {
 import { exportLeads } from "../../services/exportService";
 import api from "../../services/api";
 
-const PAGE_SIZE = 6;
-
-const PURPOSE_OPTIONS = [
-  "Building Dream House", "Investment", "Business/Commercial", "Rental Income", "Other",
-];
-const PLOT_SIZE_OPTIONS = [
-  "167 sq yd.", "200 sq yd.", "300 sq yd.", "500 sq yd.", "1,000 sq yd.", "Custom",
-];
-const BUDGET_OPTIONS = [
-  "₹30 - ₹40 Lakhs", "₹50 - ₹70 Lakhs", "₹70 Lakhs - ₹1 Crore", "₹1 Crore+", "Custom",
-];
-const PLAN_OPTIONS = [
-  "Immediately", "Within 1 Month", "Within 3 Months", "Just Exploring",
-];
-const SITE_VISIT_OPTIONS = ["Yes", "No", "Not Yet", "Need More Details"];
+const PAGE_SIZE = 8;
+const LEAD_TYPES = ["Flat Buyer", "Plot Buyer", "Land Buyer"];
 
 // ── Lead Detail Side Panel ─────────────────────────────────────────────────
 function LeadDetailPanel({ lead, onClose, onUpdated }) {
@@ -42,11 +35,7 @@ function LeadDetailPanel({ lead, onClose, onUpdated }) {
   const [newNote, setNewNote] = useState("");
   const [nextFollowupDate, setNextFollowupDate] = useState("");
   const [savingNote, setSavingNote] = useState(false);
-  const [editingFollowup, setEditingFollowup] = useState(null);
-  const [editNote, setEditNote] = useState("");
-  const [editDate, setEditDate] = useState("");
-  const [editNext, setEditNext] = useState("");
-  const [activeTab, setActiveTab] = useState("followups");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     if (!lead) return;
@@ -73,18 +62,6 @@ function LeadDetailPanel({ lead, onClose, onUpdated }) {
     finally { setSavingNote(false); }
   };
 
-  const saveEdit = async (f) => {
-    try {
-      const r = await updateLeadFollowup(f.id, {
-        note: editNote || f.note,
-        followupDate: editDate || f.followupDate,
-        nextFollowupDate: editNext || null,
-      });
-      setFollowups((prev) => prev.map((x) => (x.id === f.id ? r.data : x)));
-      setEditingFollowup(null);
-    } catch { /* silent */ }
-  };
-
   const removeFollowup = async (id) => {
     try {
       await deleteLeadFollowup(id);
@@ -92,165 +69,176 @@ function LeadDetailPanel({ lead, onClose, onUpdated }) {
     } catch { /* silent */ }
   };
 
-  const fmt = (d) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  };
-
   if (!lead) return null;
+
+  const locs = Array.isArray(lead.location)
+    ? lead.location
+    : (lead.location ? [lead.location] : (Array.isArray(lead.preferred_locations) ? lead.preferred_locations : []));
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      {/* Panel */}
-      <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden animate-slide-in-right">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{lead.name}</h2>
-            <p className="text-xs text-gray-400">{lead.company} · {lead.phone || "No phone"}</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900">{lead.name}</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                {lead.lead_type || lead.leadType || "Flat Buyer"}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">{lead.phone || "No phone"} · {lead.company || lead.name}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
             <X size={18} />
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100 px-6">
-          {["followups", "details"].map((t) => (
-            <button key={t} onClick={() => setActiveTab(t)}
-              className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 transition-colors capitalize ${
-                activeTab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              {t === "followups" ? `Follow-up History (${followups.length})` : "Lead Details"}
-            </button>
-          ))}
+        {/* Tab switcher */}
+        <div className="flex border-b border-gray-100 px-6 gap-6 text-sm shrink-0">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`py-3 font-medium border-b-2 transition-colors ${
+              activeTab === "overview" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Overview & Requirements
+          </button>
+          <button
+            onClick={() => setActiveTab("followups")}
+            className={`py-3 font-medium border-b-2 transition-colors ${
+              activeTab === "followups" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Follow-ups ({followups.length})
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {/* ── Follow-up Tab ── */}
-          {activeTab === "followups" && (
-            <div className="p-6 space-y-5">
-              {/* Add new follow-up */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-medium text-blue-700">Add Follow-up Note</p>
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {activeTab === "overview" ? (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400">Language</p>
+                  <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.language || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Lead Type</p>
+                  <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.lead_type || lead.leadType || "Flat Buyer"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Status</p>
+                  <div className="mt-1"><StatusBadge value={lead.status} /></div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Budget</p>
+                  <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.budget || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Purchase Timeline</p>
+                  <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.purchase_timeline || lead.purchaseTimeline || lead.planToPurchase || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Purpose</p>
+                  <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.lead_purpose || lead.purpose || lead.purposeOfPurchase || "—"}</p>
+                </div>
+
+                {/* Flat Buyer specifics */}
+                {(lead.lead_type === "Flat Buyer" || !lead.lead_type) && (
+                  <>
+                    <div>
+                      <p className="text-xs text-gray-400">BHK Requirement</p>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.bhk_requirement || lead.bhkRequirement || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">Property Status</p>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.property_status || lead.propertyStatus || "—"}</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Plot Buyer specifics */}
+                {lead.lead_type === "Plot Buyer" && (
+                  <div>
+                    <p className="text-xs text-gray-400">Plot Size (Sq Yd.)</p>
+                    <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.plot_size_sqyd || lead.plotSize || "—"}</p>
+                  </div>
+                )}
+
+                {/* Land Buyer specifics */}
+                {lead.lead_type === "Land Buyer" && (
+                  <div>
+                    <p className="text-xs text-gray-400">Land Size</p>
+                    <p className="text-sm font-medium text-gray-800 mt-0.5">{lead.land_size ? `${lead.land_size} ${lead.land_size_unit || "Acres"}` : "—"}</p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-400 mb-1.5 font-medium">Preferred Locations</p>
+                {locs.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {locs.map((loc, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-100">
+                        <MapPin size={11} /> {loc}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">No locations specified</p>
+                )}
+              </div>
+
+              {lead.other_requirements && (
+                <div>
+                  <p className="text-xs text-gray-400 mb-1 font-medium">Other Requirements</p>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 whitespace-pre-wrap">
+                    {lead.other_requirements}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
                 <textarea
-                  rows={3}
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="What happened in this follow-up? Update lead status, discussed requirements..."
-                  className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white resize-none"
+                  placeholder="Add a follow-up note..."
+                  className="w-full text-sm bg-white border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  rows={2}
                 />
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500">Next Follow-up Date</label>
-                    <input type="date" value={nextFollowupDate} onChange={(e) => setNextFollowupDate(e.target.value)}
-                      className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                    />
-                  </div>
-                  <button onClick={addFollowup} disabled={savingNote || !newNote.trim()}
-                    className="mt-5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+                <div className="flex items-center justify-between gap-2">
+                  <input
+                    type="date"
+                    value={nextFollowupDate}
+                    onChange={(e) => setNextFollowupDate(e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5"
+                  />
+                  <button
+                    onClick={addFollowup}
+                    disabled={savingNote || !newNote.trim()}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
-                    <Plus size={14} /> {savingNote ? "Saving..." : "Add"}
+                    {savingNote ? "Adding..." : "Add Note"}
                   </button>
                 </div>
               </div>
 
-              {/* Follow-up history */}
-              {loadingFollowups ? (
-                <p className="text-sm text-gray-400 text-center py-4">Loading history...</p>
-              ) : followups.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">No follow-ups yet. Add the first one above.</p>
-              ) : (
-                <div className="space-y-3">
-                  {followups.map((f) => (
-                    <div key={f.id} className="border border-gray-100 rounded-xl p-4 bg-white">
-                      {editingFollowup === f.id ? (
-                        <div className="space-y-2">
-                          <textarea rows={3} value={editNote} onChange={(e) => setEditNote(e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
-                          />
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-xs text-gray-500">Follow-up Date</label>
-                              <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)}
-                                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-500">Next Follow-up</label>
-                              <input type="date" value={editNext} onChange={(e) => setEditNext(e.target.value)}
-                                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => saveEdit(f)} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save</button>
-                            <button onClick={() => setEditingFollowup(null)} className="px-3 py-1.5 text-xs font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap flex-1">{f.note}</p>
-                            <div className="flex gap-1 shrink-0">
-                              <button onClick={() => { setEditingFollowup(f.id); setEditNote(f.note); setEditDate(f.followupDate?.split("T")[0] || ""); setEditNext(f.nextFollowupDate?.split("T")[0] || ""); }}
-                                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 text-xs"
-                              >Edit</button>
-                              <button onClick={() => removeFollowup(f.id)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 text-xs">Del</button>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Calendar size={11} /> {fmt(f.followupDate)}</span>
-                            {f.nextFollowupDate && (
-                              <span className="flex items-center gap-1 text-amber-600"><Calendar size={11} /> Next: {fmt(f.nextFollowupDate)}</span>
-                            )}
-                            <span>by {f.author}</span>
-                          </div>
-                        </>
-                      )}
+              <div className="space-y-2">
+                {followups.map((f) => (
+                  <div key={f.id} className="p-3 rounded-lg border border-gray-100 bg-white text-xs space-y-1">
+                    <div className="flex items-center justify-between text-gray-400">
+                      <span>{f.followupDate ? new Date(f.followupDate).toLocaleDateString() : "—"}</span>
+                      <button onClick={() => removeFollowup(f.id)} className="text-red-500 hover:text-red-700">Delete</button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Details Tab ── */}
-          {activeTab === "details" && (
-            <div className="p-6 space-y-4">
-              {[
-                { icon: Building2, label: "Company", value: lead.company },
-                { icon: Phone, label: "Phone", value: lead.phone },
-                { icon: Target, label: "Purpose of Purchase", value: lead.purposeOfPurchase },
-                { icon: MapPin, label: "Plot Size Required", value: lead.plotSize },
-                { icon: IndianRupee, label: "Budget", value: lead.budget },
-                { icon: Calendar, label: "Plan to Purchase", value: lead.planToPurchase },
-                { icon: Eye, label: "Site Visit", value: lead.siteVisit },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                    <Icon size={14} className="text-gray-400" />
+                    <p className="text-gray-800 text-sm whitespace-pre-wrap">{f.note}</p>
+                    {f.nextFollowupDate && (
+                      <p className="text-blue-600 text-[11px] font-medium">Next: {new Date(f.nextFollowupDate).toLocaleDateString()}</p>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">{label}</p>
-                    <p className="text-sm font-medium text-gray-800 mt-0.5">{value || "—"}</p>
-                  </div>
-                </div>
-              ))}
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-400">Status</p>
-                    <StatusBadge value={lead.status} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-400">Source</p>
-                    <p className="text-sm text-gray-800 mt-0.5">{lead.source || "—"}</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}
@@ -260,481 +248,711 @@ function LeadDetailPanel({ lead, onClose, onUpdated }) {
   );
 }
 
-// ── Bulk Upload Modal ──────────────────────────────────────────────────────
-function BulkUploadModal({ open, onClose, onDone }) {
-  const [text, setText] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const fileRef = useRef();
+// ── Main Leads Component ───────────────────────────────────────────────────
+export default function Leads() {
+  const { user } = useAuth();
+  const isOrgAdmin = user?.role === "ORG_ADMIN";
 
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setText(ev.target.result);
-    reader.readAsText(file);
-  };
-
-  const parseCSV = (raw) => {
-    const lines = raw.trim().split("\n");
-    if (lines.length < 2) return [];
-    // detect separator — tab or comma
-    const sep = lines[0].includes("\t") ? "\t" : ",";
-    const headers = lines[0].split(sep).map((h) => h.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""));
-    return lines.slice(1).map((line) => {
-      const cols = line.split(sep).map((v) => v.trim().replace(/^"|"$/g, "").replace(/^p:/, "").replace(/^z:/, ""));
-      const obj = {};
-      headers.forEach((h, i) => { obj[h] = cols[i] || ""; });
-      return obj;
-    }).filter((r) => r.full_name || r.name);
-  };
-
-  const handleUpload = async () => {
-    if (!text.trim()) { setError("Paste CSV content or select a file"); return; }
-    setError("");
-    setUploading(true);
-    try {
-      const leads = parseCSV(text);
-      if (leads.length === 0) { setError("No valid rows found. Check the CSV format."); setUploading(false); return; }
-      const r = await bulkUploadLeads(leads);
-      setResult(r.data);
-      onDone && onDone();
-    } catch (err) {
-      setError(err?.response?.data?.message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const reset = () => { setText(""); setResult(null); setError(""); };
-
-  if (!open) return null;
-  return (
-    <Modal open={open} onClose={() => { reset(); onClose(); }} title="Bulk Upload Leads"
-      footer={
-        result ? (
-          <button onClick={() => { reset(); onClose(); }} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Done</button>
-        ) : (
-          <>
-            <button onClick={() => { reset(); onClose(); }} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
-            <button onClick={handleUpload} disabled={uploading || !text.trim()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {uploading ? "Uploading..." : "Upload"}
-            </button>
-          </>
-        )
-      }
-    >
-      {result ? (
-        <div className="space-y-3">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
-            <p className="font-medium">Upload Complete</p>
-            <p className="mt-1">✅ {result.created} leads created · ⚠️ {result.skipped} skipped</p>
-          </div>
-          {result.errors?.length > 0 && (
-            <div className="max-h-40 overflow-y-auto border border-red-100 rounded-xl p-3 space-y-1">
-              {result.errors.map((e, i) => (
-                <p key={i} className="text-xs text-red-600">Row {e.row}: {e.reason}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 space-y-1">
-            <p className="font-medium">Expected CSV columns (Facebook Lead Ads format):</p>
-            <p className="font-mono text-xs text-blue-600">
-              full_name · phone · email · zip_code · purpose_of_purchase · plot_size_required · budget · plan_to_purchase · would_you_like_to_schedule_a_free_site_visit · lead_status · platform
-            </p>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Upload CSV file</label>
-            <input type="file" accept=".csv,.tsv,.txt" ref={fileRef} onChange={handleFile}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500">Or paste CSV content directly</label>
-            <textarea rows={7} value={text} onChange={(e) => setText(e.target.value)}
-              placeholder={"full_name\tphone\tpurpose_of_purchase\tplot_size_required\tbudget\tplan_to_purchase\n\"Rahul Sharma\"\t+919876543210\tbuilding_dream_house\t167_sq_yd.\t₹30 - ₹40 lakhs\timmediately"}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
-            />
-          </div>
-          {error && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={13} />{error}</p>}
-        </div>
-      )}
-    </Modal>
-  );
-}
-
-// ── Main Leads Page ────────────────────────────────────────────────────────
-function Leads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Filters & Search
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [source, setSource] = useState("");
-  const [convertTarget, setConvertTarget] = useState(null);
+  const [leadTypeFilter, setLeadTypeFilter] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [activeLead, setActiveLead] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [dupWarning, setDupWarning] = useState("");
-  const [detailLead, setDetailLead] = useState(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
 
+  // Modals & Panels
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeLead, setActiveLead] = useState(null);
+  const [detailLead, setDetailLead] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [convertTarget, setConvertTarget] = useState(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  // Controlled Form State for Real Estate Leads
+  const [formLeadType, setFormLeadType] = useState("Flat Buyer");
+  const [formLanguage, setFormLanguage] = useState("English");
+  const [formLocation, setFormLocation] = useState([]);
+  const [formName, setFormName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formCompany, setFormCompany] = useState("");
+  const [formBudget, setFormBudget] = useState("");
+  const [formStatus, setFormStatus] = useState("New");
+  const [formSource, setFormSource] = useState("");
+  const [formTimeline, setFormTimeline] = useState("");
+  const [formPurpose, setFormPurpose] = useState("");
+  const [formBhk, setFormBhk] = useState("");
+  const [formPropertyStatus, setFormPropertyStatus] = useState("");
+  const [formPlotSizeSqyd, setFormPlotSizeSqyd] = useState("");
+  const [formLandSize, setFormLandSize] = useState("");
+  const [formLandSizeUnit, setFormLandSizeUnit] = useState("Acres");
+  const [formOtherRequirements, setFormOtherRequirements] = useState("");
+
   const loadLeads = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
-      setLoading(true);
-      setError("");
-      const response = await getLeads();
-      setLeads(response.data);
+      const res = await getLeads({
+        search,
+        status,
+        language: languageFilter,
+        lead_type: leadTypeFilter,
+        limit: 100,
+      });
+      setLeads(res.data || []);
     } catch (err) {
-      setError(err.friendlyMessage || "Unable to load leads.");
+      setError(err?.friendlyMessage || "Failed to load leads");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search, status, languageFilter, leadTypeFilter]);
 
-  useEffect(() => { loadLeads(); }, [loadLeads]);
+  useEffect(() => {
+    loadLeads();
+  }, [loadLeads]);
 
+  // Client-side filtering if necessary
   const filtered = useMemo(() => {
     return leads.filter((l) => {
-      const matchesSearch =
-        l.name.toLowerCase().includes(search.toLowerCase()) ||
-        l.company.toLowerCase().includes(search.toLowerCase()) ||
-        l.email.toLowerCase().includes(search.toLowerCase()) ||
-        (l.phone || "").includes(search);
-      const matchesStatus = status ? l.status === status : true;
-      const matchesSource = source ? l.source === source : true;
-      return matchesSearch && matchesStatus && matchesSource;
+      if (leadTypeFilter && (l.lead_type || l.leadType) !== leadTypeFilter) return false;
+      if (languageFilter && l.language !== languageFilter) return false;
+      if (status && l.status !== status) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const locs = Array.isArray(l.location) ? l.location.join(" ").toLowerCase() : (l.location || "").toLowerCase();
+        const match =
+          l.name?.toLowerCase().includes(q) ||
+          l.phone?.toLowerCase().includes(q) ||
+          l.company?.toLowerCase().includes(q) ||
+          locs.includes(q) ||
+          l.language?.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
     });
-  }, [leads, search, status, source]);
+  }, [leads, leadTypeFilter, languageFilter, status, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
 
-  function openAddModal() { setActiveLead(null); setDupWarning(""); setModalOpen(true); }
-  function openEditModal(lead) { setActiveLead(lead); setDupWarning(""); setModalOpen(true); }
+  // Form Reset / Initialization
+  const openAddModal = () => {
+    setActiveLead(null);
+    setFormLeadType("Flat Buyer");
+    setFormLanguage("English");
+    setFormLocation([]);
+    setFormName("");
+    setFormPhone("");
+    setFormEmail("");
+    setFormCompany("");
+    setFormBudget("");
+    setFormStatus("New");
+    setFormSource("");
+    setFormTimeline("Immediately");
+    setFormPurpose("Self-use");
+    setFormBhk("2 BHK");
+    setFormPropertyStatus("Ready-to-move");
+    setFormPlotSizeSqyd("");
+    setFormLandSize("");
+    setFormLandSizeUnit("Acres");
+    setFormOtherRequirements("");
+    setModalOpen(true);
+  };
 
-  async function checkDuplicate(email, phone) {
-    if (!email && !phone) return;
-    try {
-      const params = new URLSearchParams();
-      if (email) params.append("email", email);
-      if (phone) params.append("phone", phone);
-      if (activeLead) params.append("excludeId", activeLead.id);
-      const res = await api.get(`/employee/leads/check-duplicate?${params}`);
-      const dupes = res.data?.data?.duplicates || [];
-      setDupWarning(dupes.length > 0 ? `⚠️ Similar lead exists: ${dupes[0].name} (${dupes[0].email})` : "");
-    } catch { /* silent */ }
-  }
+  const openEditModal = (lead) => {
+    setActiveLead(lead);
+    const locs = Array.isArray(lead.location)
+      ? lead.location
+      : (lead.location ? [lead.location] : (Array.isArray(lead.preferred_locations) ? lead.preferred_locations : []));
 
-  async function handleSave(e) {
+    setFormLeadType(lead.lead_type || lead.leadType || "Flat Buyer");
+    setFormLanguage(lead.language || "English");
+    setFormLocation(locs);
+    setFormName(lead.name || "");
+    setFormPhone(lead.phone || "");
+    setFormEmail(lead.email || "");
+    setFormCompany(lead.company || "");
+    setFormBudget(lead.budget || "");
+    setFormStatus(lead.status || "New");
+    setFormSource(lead.source || "");
+    setFormTimeline(lead.purchase_timeline || lead.purchaseTimeline || lead.planToPurchase || "Immediately");
+    setFormPurpose(lead.lead_purpose || lead.purpose || lead.purposeOfPurchase || "Self-use");
+    setFormBhk(lead.bhk_requirement || lead.bhkRequirement || "2 BHK");
+    setFormPropertyStatus(lead.property_status || lead.propertyStatus || "Ready-to-move");
+    setFormPlotSizeSqyd(lead.plot_size_sqyd || lead.plotSize || "");
+    setFormLandSize(lead.land_size || "");
+    setFormLandSizeUnit(lead.land_size_unit || "Acres");
+    setFormOtherRequirements(lead.other_requirements || "");
+    setModalOpen(true);
+  };
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    const form = new FormData(e.target);
-    const payload = {
-      name: form.get("name"),
-      company: form.get("company") || "—",
-      email: form.get("email"),
-      phone: form.get("phone"),
-      status: form.get("status"),
-      source: form.get("source"),
-      value: Number(form.get("value")) || 0,
-      purposeOfPurchase: form.get("purposeOfPurchase") || null,
-      plotSize: form.get("plotSize") || null,
-      budget: form.get("budget") || null,
-      planToPurchase: form.get("planToPurchase") || null,
-      siteVisit: form.get("siteVisit") || null,
-    };
+    if (!formName.trim()) {
+      setError("Lead Name is required");
+      return;
+    }
+
     setSaving(true);
     setError("");
+
+    const payload = {
+      name: formName.trim(),
+      phone: formPhone.trim(),
+      email: formEmail.trim(),
+      company: formCompany.trim() || formName.trim(),
+      lead_type: formLeadType,
+      language: formLanguage,
+      location: formLocation,
+      preferred_locations: formLocation,
+      budget: formBudget,
+      status: formStatus,
+      source: formSource,
+      purchase_timeline: formTimeline,
+      lead_purpose: formPurpose,
+      bhk_requirement: formBhk,
+      property_status: formPropertyStatus,
+      plot_size_sqyd: formPlotSizeSqyd ? Number(formPlotSizeSqyd) : null,
+      land_size: formLandSize,
+      land_size_unit: formLandSizeUnit,
+      other_requirements: formOtherRequirements,
+    };
+
     try {
       if (activeLead) {
-        const response = await updateLead(activeLead.id, payload);
-        setLeads((prev) => prev.map((l) => (l.id === activeLead.id ? response.data : l)));
-        if (detailLead?.id === activeLead.id) setDetailLead(response.data);
+        const res = await updateLead(activeLead.id, payload);
+        setLeads((prev) => prev.map((l) => (l.id === activeLead.id ? res.data : l)));
+        if (detailLead?.id === activeLead.id) setDetailLead(res.data);
       } else {
-        const response = await createLead(payload);
-        setLeads((prev) => [response.data, ...prev]);
+        const res = await createLead(payload);
+        setLeads((prev) => [res.data, ...prev]);
       }
       setModalOpen(false);
     } catch (err) {
-      setError(err.friendlyMessage || "Unable to save lead.");
+      setError(err?.response?.data?.message || err?.friendlyMessage || "Failed to save lead");
     } finally {
       setSaving(false);
     }
-  }
+  };
 
-  async function confirmDelete() {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     setSaving(true);
     try {
       await deleteLead(deleteTarget.id);
       setLeads((prev) => prev.filter((l) => l.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      setError(err.friendlyMessage || "Unable to delete lead.");
+      setError(err?.response?.data?.message || "Failed to delete lead");
     } finally {
       setSaving(false);
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="flex items-center justify-end px-6 pt-4 gap-2 flex-wrap">
-        <button onClick={() => setBulkOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
-        >
-          <Upload size={13} /> Bulk Upload
-        </button>
-        <ExportMenu onExport={exportLeads} />
+      {/* Header action bar */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-2 flex-wrap gap-3">
+        <div>
+          <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Users size={20} className="text-blue-600" /> Real Estate Leads
+          </h1>
+          <p className="text-xs text-gray-400 mt-0.5">Manage buyers and property inquiries</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setBulkOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+          >
+            <Upload size={13} /> Bulk Upload
+          </button>
+          <ExportMenu onExport={exportLeads} />
+        </div>
       </div>
 
       <ListToolbar
         searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); setSelectedIds([]); }}
-        searchPlaceholder="Search by name, phone, company..."
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="Search by name, contact, location..."
         addLabel="Add Lead"
         onAddClick={openAddModal}
-        bulkActions={selectedIds.length > 0 && (
-          <button onClick={handleBulkDelete} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
-            {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
-          </button>
-        )}
         filters={
           <>
-            <FilterSelect value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={LEAD_STATUSES} allLabel="All Statuses" />
-            <FilterSelect value={source} onChange={(v) => { setSource(v); setPage(1); }} options={LEAD_SOURCES} allLabel="All Sources" />
+            <FilterSelect
+              value={leadTypeFilter}
+              onChange={(v) => { setLeadTypeFilter(v); setPage(1); }}
+              options={LEAD_TYPES}
+              allLabel="All Lead Types"
+            />
+            <FilterSelect
+              value={status}
+              onChange={(v) => { setStatus(v); setPage(1); }}
+              options={LEAD_STATUSES}
+              allLabel="All Statuses"
+            />
+            <FilterSelect
+              value={languageFilter}
+              onChange={(v) => { setLanguageFilter(v); setPage(1); }}
+              options={["Hindi", "English", "Telugu"]}
+              allLabel="All Languages"
+            />
           </>
         }
       />
 
       {error && (
-        <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+        <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError("")}><X size={14} /></button>
+        </div>
       )}
 
       {loading ? (
-        <div className="p-6 text-sm text-gray-500">Loading leads...</div>
+        <div className="p-8 text-center text-sm text-gray-400">Loading leads...</div>
       ) : pageItems.length === 0 ? (
-        <EmptyState icon={Users} title="No leads found" description="Try adjusting filters or add a new lead."
-          actionLabel="Add Lead" onAction={openAddModal}
+        <EmptyState
+          icon={Users}
+          title="No leads found"
+          description="Try adjusting your filters or click 'Add Lead' to create one."
+          actionLabel="Add Lead"
+          onAction={openAddModal}
         />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-4 py-3 font-medium">
-                  <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
-                    checked={pageItems.length > 0 && selectedIds.length === pageItems.length}
-                    onChange={(e) => setSelectedIds(e.target.checked ? pageItems.map(l => l.id) : [])}
-                  />
-                </th>
+              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
                 <th className="px-4 py-3 font-medium">Lead Name</th>
                 <th className="px-4 py-3 font-medium">Contact No.</th>
-                <th className="px-4 py-3 font-medium">Purpose</th>
-                <th className="px-4 py-3 font-medium">Plot Size</th>
+                <th className="px-4 py-3 font-medium">Lead Type</th>
+                <th className="px-4 py-3 font-medium">Language</th>
+                <th className="px-4 py-3 font-medium">Location</th>
+                <th className="px-4 py-3 font-medium">Details</th>
                 <th className="px-4 py-3 font-medium">Budget</th>
-                <th className="px-4 py-3 font-medium">Plan</th>
-                <th className="px-4 py-3 font-medium">Site Visit</th>
+                <th className="px-4 py-3 font-medium">Timeline</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Source</th>
-                <th className="px-4 py-3 font-medium"></th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {pageItems.map((lead) => (
-                <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer group" onClick={(e) => {
-                  if (e.target.closest('td:last-child') || e.target.closest('td:first-child')) return; // Ignore clicks on actions or checkbox
-                  setDetailLead(lead);
-                }}>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <input type="checkbox" className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
-                      checked={selectedIds.includes(lead.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setSelectedIds(prev => e.target.checked ? [...prev, lead.id] : prev.filter(id => id !== lead.id));
-                      }}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">
-                        {lead.name}
-                      </p>
-                      <p className="text-xs text-gray-400">{lead.company}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{lead.phone || "—"}</td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs text-gray-600">{lead.purposeOfPurchase || "—"}</span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{lead.plotSize || "—"}</td>
-                  <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{lead.budget || "—"}</td>
-                  <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{lead.planToPurchase || "—"}</td>
-                  <td className="px-4 py-3">
-                    {lead.siteVisit ? (
+            <tbody className="divide-y divide-gray-50">
+              {pageItems.map((lead) => {
+                const locs = Array.isArray(lead.location)
+                  ? lead.location
+                  : (lead.location ? [lead.location] : (Array.isArray(lead.preferred_locations) ? lead.preferred_locations : []));
+
+                const type = lead.lead_type || lead.leadType || "Flat Buyer";
+
+                return (
+                  <tr
+                    key={lead.id}
+                    className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                    onClick={() => setDetailLead(lead)}
+                  >
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {lead.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{lead.company || lead.name}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-700">
+                      {lead.phone ? (
+                        <a
+                          href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-emerald-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          <Phone size={12} className="text-emerald-500" /> {lead.phone}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        lead.siteVisit === "Yes" ? "bg-green-50 text-green-700" :
-                        lead.siteVisit === "No" ? "bg-red-50 text-red-600" :
-                        "bg-amber-50 text-amber-700"
-                      }`}>{lead.siteVisit}</span>
-                    ) : "—"}
-                  </td>
-                  <td className="px-4 py-3"><StatusBadge value={lead.status} /></td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{lead.source || "—"}</td>
-                  <td className="px-4 py-3">
-                    <RowActions
-                      onView={() => setDetailLead(lead)}
-                      onEdit={() => openEditModal(lead)}
-                      onDelete={() => setDeleteTarget(lead)}
-                      extra={[
-                        ...(lead.status !== "Converted" ? [{ label: "Convert to Customer", onClick: () => setConvertTarget(lead) }] : []),
-                      ]}
-                    />
-                  </td>
-                </tr>
-              ))}
+                        type === "Flat Buyer" ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                        type === "Plot Buyer" ? "bg-amber-50 text-amber-700 border border-amber-100" :
+                        "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                      }`}>
+                        {type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600">
+                      {lead.language ? (
+                        <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-slate-700">
+                          <Globe size={11} className="text-slate-400" /> {lead.language}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {locs.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {locs.slice(0, 2).map((l, i) => (
+                            <span key={i} className="text-[11px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                              {l}
+                            </span>
+                          ))}
+                          {locs.length > 2 && (
+                            <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">
+                              +{locs.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                      {type === "Flat Buyer" && (lead.bhk_requirement || lead.bhkRequirement || "—")}
+                      {type === "Plot Buyer" && (lead.plot_size_sqyd ? `${lead.plot_size_sqyd} sq yd` : (lead.plotSize || "—"))}
+                      {type === "Land Buyer" && (lead.land_size ? `${lead.land_size} ${lead.land_size_unit || "Acres"}` : "—")}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-medium text-gray-800 whitespace-nowrap">
+                      {lead.budget || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      {lead.purchase_timeline || lead.purchaseTimeline || lead.planToPurchase || "—"}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <StatusBadge value={lead.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <RowActions
+                        onView={() => setDetailLead(lead)}
+                        onEdit={() => openEditModal(lead)}
+                        onDelete={isOrgAdmin ? () => setDeleteTarget(lead) : undefined}
+                        extra={[
+                          ...(lead.status !== "Converted"
+                            ? [{ label: "Convert to Customer", onClick: () => setConvertTarget(lead) }]
+                            : []),
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalItems={filtered.length}
+        pageSize={PAGE_SIZE}
+      />
 
-      {/* Add / Edit Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={activeLead ? "Edit Lead" : "Add Lead"}
+      {/* Add / Edit Lead Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={activeLead ? "Edit Real Estate Lead" : "Add Real Estate Lead"}
         footer={
           <>
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
-            <button type="submit" form="lead-form" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60">
-              {saving ? "Saving..." : activeLead ? "Save Changes" : "Add Lead"}
+            <button
+              onClick={() => setModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="lead-form"
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : activeLead ? "Save Changes" : "Create Lead"}
             </button>
           </>
         }
       >
-        <form id="lead-form" onSubmit={handleSave} className="space-y-4">
-          {dupWarning && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm">
-              <AlertCircle size={15} className="shrink-0" />{dupWarning}
+        <form id="lead-form" onSubmit={handleSave} className="space-y-4 max-h-[75vh] overflow-y-auto px-1">
+          {/* Lead Type Tabs Selector (B2) */}
+          <div>
+            <label className="text-xs font-semibold text-gray-700 block mb-1.5 uppercase tracking-wide">
+              Lead Category / Type *
+            </label>
+            <div className="grid grid-cols-3 gap-2 bg-gray-100 p-1 rounded-xl">
+              {LEAD_TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setFormLeadType(t)}
+                  className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                    formLeadType === t
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 1: Name & Phone */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600">Full Name *</label>
+              <input
+                type="text"
+                required
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g. Ramesh Kumar"
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600">Contact / WhatsApp No. *</label>
+              <input
+                type="text"
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="e.g. 9876543210"
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Language (B1) & Preferred Location Multi-Select (B1) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600">Language *</label>
+              <EditableSelect
+                vertical="real_estate"
+                category="lead_language"
+                value={formLanguage}
+                onChange={setFormLanguage}
+                placeholder="Select Language"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600">Preferred Location(s) (Multi-Select) *</label>
+              <EditableMultiSelect
+                vertical="real_estate"
+                category="lead_location"
+                value={formLocation}
+                onChange={setFormLocation}
+                placeholder="Select Preferred Locations"
+              />
+            </div>
+          </div>
+
+          {/* Row 3: Budget & Timeline */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600">Budget</label>
+              <input
+                type="text"
+                value={formBudget}
+                onChange={(e) => setFormBudget(e.target.value)}
+                placeholder="e.g. ₹50 - 70 Lakhs"
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600">Purchase Timeline</label>
+              <EditableSelect
+                vertical="real_estate"
+                category="lead_purchase_timeline"
+                value={formTimeline}
+                onChange={setFormTimeline}
+                placeholder="Select Timeline"
+              />
+            </div>
+          </div>
+
+          {/* CONDITIONAL FIELDS BASED ON LEAD TYPE */}
+
+          {/* ── FLAT BUYER ── */}
+          {formLeadType === "Flat Buyer" && (
+            <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-4">
+              <p className="text-xs font-bold text-blue-900 uppercase tracking-wider">Flat Requirements</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600">BHK Requirement</label>
+                  <EditableSelect
+                    vertical="real_estate"
+                    category="lead_bhk"
+                    value={formBhk}
+                    onChange={setFormBhk}
+                    placeholder="BHK"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Purpose</label>
+                  <EditableSelect
+                    vertical="real_estate"
+                    category="lead_purpose_flat"
+                    value={formPurpose}
+                    onChange={setFormPurpose}
+                    placeholder="Purpose"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Property Status</label>
+                  <EditableSelect
+                    vertical="real_estate"
+                    category="lead_property_status"
+                    value={formPropertyStatus}
+                    onChange={setFormPropertyStatus}
+                    placeholder="Status"
+                  />
+                </div>
+              </div>
             </div>
           )}
-          {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Full Name *</label>
-              <input name="name" defaultValue={activeLead?.name} required className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+
+          {/* ── PLOT BUYER ── */}
+          {formLeadType === "Plot Buyer" && (
+            <div className="p-4 bg-amber-50/50 rounded-xl border border-amber-100 space-y-4">
+              <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">Plot Requirements</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Purpose</label>
+                  <EditableSelect
+                    vertical="real_estate"
+                    category="lead_purpose_plot"
+                    value={formPurpose}
+                    onChange={setFormPurpose}
+                    placeholder="Purpose"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Plot Size (in Sq Yd.)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formPlotSizeSqyd}
+                    onChange={(e) => setFormPlotSizeSqyd(e.target.value)}
+                    placeholder="e.g. 200"
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Phone / Contact No.</label>
-              <input name="phone" defaultValue={activeLead?.phone}
-                onBlur={(e) => checkDuplicate("", e.target.value)}
-                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+          )}
+
+          {/* ── LAND BUYER ── */}
+          {formLeadType === "Land Buyer" && (
+            <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 space-y-4">
+              <p className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Land Requirements</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Purpose</label>
+                  <EditableSelect
+                    vertical="real_estate"
+                    category="lead_purpose_land"
+                    value={formPurpose}
+                    onChange={setFormPurpose}
+                    placeholder="Purpose"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Land Size & Unit</label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={formLandSize}
+                      onChange={(e) => setFormLandSize(e.target.value)}
+                      placeholder="e.g. 2.5"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                    <EditableSelect
+                      vertical="real_estate"
+                      category="lead_land_size_unit"
+                      value={formLandSizeUnit}
+                      onChange={setFormLandSizeUnit}
+                      placeholder="Unit"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Other Requirements textarea */}
+          <div>
+            <label className="text-xs font-medium text-gray-600">Other Requirements</label>
+            <textarea
+              rows={2}
+              value={formOtherRequirements}
+              onChange={(e) => setFormOtherRequirements(e.target.value)}
+              placeholder="Any specific preferences or notes..."
+              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
           </div>
-          {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
+
+          {/* Status & Source */}
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
             <div>
-              <label className="text-xs font-medium text-gray-500">Email</label>
-              <input type="email" name="email" defaultValue={activeLead?.email}
-                onBlur={(e) => checkDuplicate(e.target.value, "")}
-                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Company</label>
-              <input name="company" defaultValue={activeLead?.company} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
-            </div>
-          </div>
-          {/* Row 3 — real-estate fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Purpose of Purchase</label>
-              <select name="purposeOfPurchase" defaultValue={activeLead?.purposeOfPurchase || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                <option value="">— Select —</option>
-                {PURPOSE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Plot Size Required</label>
-              <select name="plotSize" defaultValue={activeLead?.plotSize || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                <option value="">— Select —</option>
-                {PLOT_SIZE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-          </div>
-          {/* Row 4 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Budget</label>
-              <input type="text" name="budget" defaultValue={activeLead?.budget || ""} placeholder="e.g. 30 - 40 Lakhs" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Plan to Purchase</label>
-              <select name="planToPurchase" defaultValue={activeLead?.planToPurchase || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                <option value="">— Select —</option>
-                {PLAN_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-          </div>
-          {/* Row 5 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Site Visit</label>
-              <select name="siteVisit" defaultValue={activeLead?.siteVisit || ""} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
-                <option value="">— Select —</option>
-                {SITE_VISIT_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Status</label>
-              <select name="status" defaultValue={activeLead?.status || LEAD_STATUSES[0]} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+              <label className="text-xs font-medium text-gray-600">Status</label>
+              <select
+                value={formStatus}
+                onChange={(e) => setFormStatus(e.target.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+              >
                 {LEAD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600">Source</label>
+              <input
+                type="text"
+                value={formSource}
+                onChange={(e) => setFormSource(e.target.value)}
+                placeholder="e.g. Website, Referral, Social Media"
+                className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+              />
+            </div>
           </div>
-          {/* Row 6 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Source</label>
-              <input type="text" name="source" defaultValue={activeLead?.source || ""} placeholder="e.g. Instagram, Facebook" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Deal Value (₹)</label>
-              <input type="number" name="value" defaultValue={activeLead?.value} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
-            </div>
-          </div>
-          {activeLead && (
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Tags</label>
-              <TagsInput entityType="lead" entityId={activeLead.id} />
-            </div>
-          )}
         </form>
       </Modal>
 
-      {/* Delete Modal */}
-      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Lead"
-        footer={
-          <>
-            <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
-            <button onClick={confirmDelete} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60">
-              {saving ? "Deleting..." : "Delete"}
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-gray-600">
-          Are you sure you want to delete <span className="font-medium text-gray-900">{deleteTarget?.name}</span>? This cannot be undone.
-        </p>
-      </Modal>
+      {/* Delete Confirmation Modal (Org Admin Only) */}
+      {isOrgAdmin && (
+        <Modal
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="Delete Lead"
+          footer={
+            <>
+              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                {saving ? "Deleting..." : "Delete"}
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete lead <span className="font-semibold text-gray-900">{deleteTarget?.name}</span>? This action cannot be undone.
+          </p>
+        </Modal>
+      )}
 
       {/* Convert Lead Modal */}
-      <ConvertLeadModal open={!!convertTarget} lead={convertTarget} onClose={() => setConvertTarget(null)}
-        onConverted={({ lead: updatedLead }) => {
-          setLeads((prev) => prev.map((l) => (l.id === updatedLead?.id ? { ...l, status: "Converted" } : l)));
+      <ConvertLeadModal
+        open={!!convertTarget}
+        lead={convertTarget}
+        onClose={() => setConvertTarget(null)}
+        onConverted={({ lead: updated }) => {
+          setLeads((prev) => prev.map((l) => (l.id === updated?.id ? { ...l, status: "Converted" } : l)));
           setConvertTarget(null);
         }}
       />
@@ -750,10 +968,6 @@ function Leads() {
           }}
         />
       )}
-
-      {/* Bulk Upload Modal */}
-      <BulkUploadModal open={bulkOpen} onClose={() => setBulkOpen(false)} onDone={loadLeads} />
     </div>
   );
 }
-export default Leads;
