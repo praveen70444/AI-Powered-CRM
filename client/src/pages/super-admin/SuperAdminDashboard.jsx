@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Search, Building2, Users } from "lucide-react";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import api from "../../services/api";
 
+const SUPER_ADMIN_COL_DEFAULTS = {
+  organization: "Organization",
+  industry: "Industry",
+  users: "Users",
+  status: "Status",
+  created_date: "Created Date"
+};
+
 const SuperAdminDashboard = () => {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_super_admin",
+    SUPER_ADMIN_COL_DEFAULTS
+  );
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,21 +138,11 @@ const SuperAdminDashboard = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-950/50 border-b border-slate-800">
-                <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Organization
-                </th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Industry
-                </th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Users
-                </th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Created Date
-                </th>
+                <EditableColumnHeader colKey="organization" labels={colLabels} defaults={SUPER_ADMIN_COL_DEFAULTS} updateLabel={updateColLabel} dark={true} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" />
+                <EditableColumnHeader colKey="industry" labels={colLabels} defaults={SUPER_ADMIN_COL_DEFAULTS} updateLabel={updateColLabel} dark={true} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" />
+                <EditableColumnHeader colKey="users" labels={colLabels} defaults={SUPER_ADMIN_COL_DEFAULTS} updateLabel={updateColLabel} dark={true} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" />
+                <EditableColumnHeader colKey="status" labels={colLabels} defaults={SUPER_ADMIN_COL_DEFAULTS} updateLabel={updateColLabel} dark={true} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" />
+                <EditableColumnHeader colKey="created_date" labels={colLabels} defaults={SUPER_ADMIN_COL_DEFAULTS} updateLabel={updateColLabel} dark={true} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">

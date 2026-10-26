@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Shield, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { getAuditLogs } from "../../services/organizationService";
+
+const AUDIT_COL_DEFAULTS = {
+  time: "Time",
+  user: "User",
+  action: "Action",
+  entity: "Entity",
+  ip_address: "IP Address"
+};
 
 const ACTION_STYLES = {
   create: "bg-green-50 text-green-700 border-green-200",
@@ -32,6 +41,10 @@ function timeAgo(date) {
 }
 
 export default function AuditLogsPage() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_audit_logs",
+    AUDIT_COL_DEFAULTS
+  );
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -108,11 +121,11 @@ export default function AuditLogsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-slate-600">Time</th>
-                  <th className="text-left px-6 py-3 font-medium text-slate-600">User</th>
-                  <th className="text-left px-6 py-3 font-medium text-slate-600">Action</th>
-                  <th className="text-left px-6 py-3 font-medium text-slate-600">Entity</th>
-                  <th className="text-left px-6 py-3 font-medium text-slate-600">IP Address</th>
+                  <EditableColumnHeader colKey="time" labels={colLabels} defaults={AUDIT_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                  <EditableColumnHeader colKey="user" labels={colLabels} defaults={AUDIT_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                  <EditableColumnHeader colKey="action" labels={colLabels} defaults={AUDIT_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                  <EditableColumnHeader colKey="entity" labels={colLabels} defaults={AUDIT_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                  <EditableColumnHeader colKey="ip_address" labels={colLabels} defaults={AUDIT_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

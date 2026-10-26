@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import { Mail, Clock, RefreshCw, UserPlus, XCircle } from "lucide-react";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import {
   getOrganizationInvitations,
   createOrganizationInvitation,
   cancelInvitation,
 } from "../../services/organizationService";
 import Modal from "../../components/employee/Modal";
+
+const INV_COL_DEFAULTS = {
+  employee: "Employee",
+  role: "Role",
+  status: "Status",
+  expires: "Expires",
+  invited_by: "Invited By"
+};
 
 const EMPLOYEE_ROLE_OPTIONS = [
   { value: "SALES_EXECUTIVE", label: "Sales Executive" },
@@ -29,6 +38,10 @@ function StatusBadge({ status }) {
 }
 
 function InvitationsPage() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_invitations",
+    INV_COL_DEFAULTS
+  );
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -152,11 +165,11 @@ function InvitationsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4 font-medium text-slate-600">Employee</th>
-                  <th className="text-left px-6 py-4 font-medium text-slate-600">Role</th>
-                  <th className="text-left px-6 py-4 font-medium text-slate-600">Status</th>
-                  <th className="text-left px-6 py-4 font-medium text-slate-600">Expires</th>
-                  <th className="text-left px-6 py-4 font-medium text-slate-600">Invited By</th>
+                  <EditableColumnHeader colKey="employee" labels={colLabels} defaults={INV_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                  <EditableColumnHeader colKey="role" labels={colLabels} defaults={INV_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                  <EditableColumnHeader colKey="status" labels={colLabels} defaults={INV_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                  <EditableColumnHeader colKey="expires" labels={colLabels} defaults={INV_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                  <EditableColumnHeader colKey="invited_by" labels={colLabels} defaults={INV_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
                   <th className="px-6 py-4" />
                 </tr>
               </thead>

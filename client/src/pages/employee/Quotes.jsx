@@ -3,11 +3,24 @@ import { FileText, Plus, Trash2, ChevronDown, ChevronUp, Package } from "lucide-
 import Modal from "../../components/employee/Modal";
 import StatusBadge from "../../components/employee/StatusBadge";
 import EmptyState from "../../components/employee/EmptyState";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import api from "../../services/api";
 
 const QUOTE_STATUSES = ["Draft", "Sent", "Accepted", "Rejected", "Expired"];
 
+const QUOTE_COL_DEFAULTS = {
+  quote_number: "Quote #",
+  customer: "Customer",
+  status: "Status",
+  total: "Total",
+  valid_until: "Valid Until"
+};
+
 function Quotes() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_quotes",
+    QUOTE_COL_DEFAULTS
+  );
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -122,12 +135,12 @@ function Quotes() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-6 py-3 font-medium">Quote #</th>
-                <th className="px-6 py-3 font-medium">Customer</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium">Total</th>
-                <th className="px-6 py-3 font-medium">Valid Until</th>
+              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
+                <EditableColumnHeader colKey="quote_number" labels={colLabels} defaults={QUOTE_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="customer" labels={colLabels} defaults={QUOTE_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="status" labels={colLabels} defaults={QUOTE_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="total" labels={colLabels} defaults={QUOTE_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="valid_until" labels={colLabels} defaults={QUOTE_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
                 <th className="px-6 py-3 font-medium" />
               </tr>
             </thead>

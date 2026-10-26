@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { Users, Search, UserPlus, X, Mail, Shield, CheckCircle } from "lucide-react";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import {
   getOrganizationEmployees,
   createOrganizationInvitation,
   updateEmployeeStatus,
 } from "../../services/organizationService";
+
+const EMP_COL_DEFAULTS = {
+  employee: "Employee",
+  email: "Email",
+  role: "Role",
+  status: "Status"
+};
+
 function EmployeesPage() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_employees",
+    EMP_COL_DEFAULTS
+  );
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -190,18 +203,10 @@ function EmployeesPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                      Employee
-                    </th>
-                    <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                      Email
-                    </th>
-                    <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                      Role
-                    </th>
-                    <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                      Status
-                    </th>
+                    <EditableColumnHeader colKey="employee" labels={colLabels} defaults={EMP_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                    <EditableColumnHeader colKey="email" labels={colLabels} defaults={EMP_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                    <EditableColumnHeader colKey="role" labels={colLabels} defaults={EMP_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
+                    <EditableColumnHeader colKey="status" labels={colLabels} defaults={EMP_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-4" />
                     <th className="px-6 py-4" />
                   </tr>
                 </thead>

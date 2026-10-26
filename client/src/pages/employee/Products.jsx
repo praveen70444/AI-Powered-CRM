@@ -7,10 +7,23 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import StatusBadge from "../../components/employee/StatusBadge";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
+
+const PRODUCT_COL_DEFAULTS = {
+  s_no: "S.No.",
+  venture_name: "Venture Name",
+  village: "Village",
+  min_plot_size: "Min Plot Size",
+  price_sqyd: "Price / Sq. Yd.",
+  total_acres: "Total Acres",
+  booking_advance: "Booking Advance",
+  rc: "R/C",
+  status: "Status"
+};
 
 // ── Venture Detail Side Panel ─────────────────────────────────────────────
 function VentureDetailPanel({ venture, onClose, onEdit, onDelete, canDelete }) {
@@ -102,6 +115,11 @@ function VentureDetailPanel({ venture, onClose, onEdit, onDelete, canDelete }) {
 export default function Products() {
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
+
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_products",
+    PRODUCT_COL_DEFAULTS
+  );
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -321,15 +339,15 @@ export default function Products() {
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 font-medium">S.No.</th>
-                <th className="px-4 py-3 font-medium">Venture Name</th>
-                <th className="px-4 py-3 font-medium">Village</th>
-                <th className="px-4 py-3 font-medium">Min Plot Size</th>
-                <th className="px-4 py-3 font-medium">Price / Sq. Yd.</th>
-                <th className="px-4 py-3 font-medium">Total Acres</th>
-                <th className="px-4 py-3 font-medium">Booking Advance</th>
-                <th className="px-4 py-3 font-medium">R/C</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <EditableColumnHeader colKey="s_no" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="venture_name" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="village" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="min_plot_size" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="price_sqyd" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="total_acres" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="booking_advance" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="rc" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="status" labels={colLabels} defaults={PRODUCT_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

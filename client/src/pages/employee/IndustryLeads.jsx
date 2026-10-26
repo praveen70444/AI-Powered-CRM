@@ -7,6 +7,7 @@ import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import IndustryLeadDetailPanel from "../../components/employee/IndustryLeadDetailPanel";
 import ConvertIndustryLeadModal from "../../components/employee/ConvertIndustryLeadModal";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
@@ -66,6 +67,20 @@ const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Unqualified", "Converte
 export default function IndustryLeads({ type }) {
   const config = LEAD_CONFIG[type];
   const Icon = config.icon;
+
+  const colDefaults = React.useMemo(() => {
+    const d = {};
+    config.fields.forEach((f) => {
+      d[f.name] = f.label;
+    });
+    d.status = "Status";
+    return d;
+  }, [config]);
+
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    `col_labels_ind_${type}`,
+    colDefaults
+  );
 
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -167,11 +182,22 @@ export default function IndustryLeads({ type }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                {config.fields.map(f => (
-                  <th key={f.name} className="px-4 py-3 font-medium whitespace-nowrap">{f.label}</th>
+              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
+                {config.fields.map((f) => (
+                  <EditableColumnHeader
+                    key={f.name}
+                    colKey={f.name}
+                    labels={colLabels}
+                    defaults={colDefaults}
+                    updateLabel={updateColLabel}
+                  />
                 ))}
-                <th className="px-4 py-3 font-medium">Status</th>
+                <EditableColumnHeader
+                  colKey="status"
+                  labels={colLabels}
+                  defaults={colDefaults}
+                  updateLabel={updateColLabel}
+                />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

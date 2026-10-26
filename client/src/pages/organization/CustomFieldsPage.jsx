@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
 import { Sliders, Plus, Trash2, Edit2, Check, X } from "lucide-react";
 import Modal from "../../components/employee/Modal";
+import EditableColumnHeader, { useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import api from "../../services/api";
 
 const ENTITY_TYPES = ["lead", "customer", "deal", "task"];
 const FIELD_TYPES = ["text", "number", "date", "dropdown", "checkbox", "textarea"];
 
+const CF_COL_DEFAULTS = {
+  field_label: "Field Label",
+  field_name: "Field Name",
+  type: "Type",
+  required: "Required"
+};
+
 function CustomFieldsPage() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels(
+    "col_labels_custom_fields",
+    CF_COL_DEFAULTS
+  );
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -120,10 +132,10 @@ function CustomFieldsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-slate-600">Field Label</th>
-                <th className="text-left px-6 py-3 font-medium text-slate-600">Field Name</th>
-                <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
-                <th className="text-left px-6 py-3 font-medium text-slate-600">Required</th>
+                <EditableColumnHeader colKey="field_label" labels={colLabels} defaults={CF_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="field_name" labels={colLabels} defaults={CF_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="type" labels={colLabels} defaults={CF_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
+                <EditableColumnHeader colKey="required" labels={colLabels} defaults={CF_COL_DEFAULTS} updateLabel={updateColLabel} className="px-6 py-3" />
                 <th className="px-6 py-3" />
               </tr>
             </thead>
