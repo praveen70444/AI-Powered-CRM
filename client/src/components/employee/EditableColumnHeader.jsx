@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Pencil, RotateCcw } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 /**
  * useColumnLabels – persists column label overrides in localStorage.
@@ -18,43 +18,28 @@ export function useColumnLabels(storageKey, defaults) {
   });
 
   const updateLabel = (colKey, newLabel) => {
+    const trimmed = newLabel.trim() || defaults[colKey];
     setLabels((prev) => {
-      const next = { ...prev, [colKey]: newLabel.trim() || defaults[colKey] };
+      const next = { ...prev, [colKey]: trimmed };
       try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch {}
       return next;
     });
   };
 
-  const resetLabel = (colKey) => {
-    setLabels((prev) => {
-      const next = { ...prev, [colKey]: defaults[colKey] };
-      try {
-        const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-        delete saved[colKey];
-        localStorage.setItem(storageKey, JSON.stringify(saved));
-      } catch {}
-      return next;
-    });
-  };
-
-  const resetAll = () => {
-    setLabels({ ...defaults });
-    try { localStorage.removeItem(storageKey); } catch {}
-  };
-
-  return { labels, updateLabel, resetLabel, resetAll };
+  return { labels, updateLabel };
 }
 
 /**
  * EditableColumnHeader – renders a <th> with inline rename capability.
  *
- * Props:
- *   colKey     – key to match against labels map
- *   labels     – current labels object from useColumnLabels
- *   defaults   – default labels object (for reset tooltip)
- *   updateLabel – function(colKey, newLabel)
- *   className  – extra className for <th>
- *   children   – fallback content (unused if labels[colKey] is set)
+ * Usage:
+ *   <EditableColumnHeader colKey="name" labels={colLabels} defaults={DEFAULTS} updateLabel={updateColLabel} />
+ *
+ * - Click the ✏️ icon OR double-click the text to rename
+ * - Press Enter or click away to save
+ * - Press Escape to cancel
+ * - Custom names are shown in blue
+ * - Labels persist across page reloads (localStorage)
  */
 export function EditableColumnHeader({
   colKey,
@@ -62,19 +47,22 @@ export function EditableColumnHeader({
   defaults,
   updateLabel,
   className = "",
-  children,
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const inputRef = useRef(null);
+  const [editing, setEditing]   = useState(false);
+  const [draft, setDraft]       = useState("");
+  const [hovered, setHovered]   = useState(false);
+  const inputRef                = useRef(null);
+
   const isCustom = labels[colKey] !== defaults[colKey];
+  const label    = labels[colKey];
 
   const startEdit = (e) => {
     e.stopPropagation();
-    setDraft(labels[colKey]);
+    setDraft(label);
     setEditing(true);
   };
 
+  // Auto-focus + select all when edit mode opens
   useEffect(() => {
     if (editing && inputRef.current) {
       inputRef.current.focus();
@@ -83,12 +71,11 @@ export function EditableColumnHeader({
   }, [editing]);
 
   const commit = () => {
-    updateLabel(colKey, draft || labels[colKey]);
+    updateLabel(colKey, draft || label);
     setEditing(false);
   };
 
-  const label = labels[colKey] ?? children;
-
+  // ── Edit Mode ──────────────────────────────────────────────
   if (editing) {
     return (
       <th className={`px-4 py-3 font-medium ${className}`}>
@@ -98,38 +85,68 @@ export function EditableColumnHeader({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
-            if (e.key === "Enter") commit();
-            if (e.key === "Escape") setEditing(false);
+            if (e.key === "Enter")  { e.preventDefault(); commit(); }
+            if (e.key === "Escape") { setEditing(false); }
           }}
           onClick={(e) => e.stopPropagation()}
-          className="
-            w-full min-w-[60px] max-w-[140px]
-            px-1.5 py-0.5 text-xs font-medium
-            border border-blue-400 rounded
-            bg-white text-gray-800
-            focus:outline-none focus:ring-1 focus:ring-blue-500
-          "
-          style={{ textTransform: "none", letterSpacing: "normal" }}
+          style={{
+            width: "100%",
+            minWidth: "60px",
+            maxWidth: "150px",
+            padding: "2px 6px",
+            fontSize: "11px",
+            fontWeight: 500,
+            border: "1.5px solid #3b82f6",
+            borderRadius: "4px",
+            background: "#fff",
+            color: "#1e293b",
+            outline: "none",
+            boxShadow: "0 0 0 3px rgba(59,130,246,0.15)",
+            textTransform: "none",
+            letterSpacing: "normal",
+          }}
         />
       </th>
     );
   }
 
+  // ── Display Mode ───────────────────────────────────────────
   return (
     <th
-      className={`px-4 py-3 font-medium group/th relative whitespace-nowrap ${className}`}
+      className={`px-4 py-3 font-medium ${className}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onDoubleClick={startEdit}
-      title="Double-click to rename column"
+      title="Double-click or click ✏️ to rename"
+      style={{ whiteSpace: "nowrap", cursor: "default", position: "relative" }}
     >
-      <span className={isCustom ? "text-blue-500" : ""}>{label}</span>
+      <span
+        style={{
+          color: isCustom ? "#3b82f6" : undefined,
+          transition: "color 0.15s",
+        }}
+      >
+        {label}
+      </span>
+
+      {/* Pencil button — shows on hover */}
       <button
         onClick={startEdit}
         title="Rename column"
-        className="
-          ml-1 opacity-0 group-hover/th:opacity-100 transition-opacity
-          text-gray-400 hover:text-blue-500
-          inline-flex items-center
-        "
+        style={{
+          marginLeft: "4px",
+          padding: "1px 2px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "#94a3b8",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.15s, color 0.15s",
+          verticalAlign: "middle",
+          lineHeight: 1,
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#3b82f6"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
       >
         <Pencil size={10} />
       </button>
