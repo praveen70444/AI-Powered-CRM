@@ -10,19 +10,25 @@ BEGIN;
 -- GLOBAL: Editable Dropdown Options Table
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS dropdown_options (
-    id BIGSERIAL PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     organization_id BIGINT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    vertical VARCHAR(50) NOT NULL,  -- 'real_estate', 'construction', 'both'
-    category VARCHAR(100) NOT NULL, -- e.g. 'lead_language', 'lead_location', 'service_type'
-    value VARCHAR(200) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    sort_order INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    vertical        VARCHAR(50)  NOT NULL,  -- 'real_estate', 'construction', 'both'
+    category        VARCHAR(100) NOT NULL,  -- e.g. 'lead_language', 'lead_location', 'service_type'
+    value           VARCHAR(200) NOT NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order      INTEGER DEFAULT 0,
+    created_by      BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(organization_id, vertical, category, value)
 );
 
 CREATE INDEX IF NOT EXISTS idx_dropdown_options_lookup 
     ON dropdown_options(organization_id, vertical, category);
+
+-- Safe: add columns if table already existed without them
+ALTER TABLE dropdown_options ADD COLUMN IF NOT EXISTS created_by BIGINT REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE dropdown_options ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- ---------------------------------------------------------------------------
 -- B1/B2: leads new columns

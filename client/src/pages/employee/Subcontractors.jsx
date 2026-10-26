@@ -7,12 +7,26 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import EditableSelect from "../../components/employee/EditableSelect";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
 
+const SUB_COL_DEFAULTS = {
+  contractor: "Contractor / Company",
+  service_type: "Service Type",
+  contact_person: "Contact Person",
+  contact: "WhatsApp / Contact",
+  location: "Location / Area",
+  experience: "Experience",
+  workforce: "Workforce",
+  completed: "Completed",
+  rating: "Rating / Notes",
+};
+
 export default function Subcontractors() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_subcontractors", SUB_COL_DEFAULTS);
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
 
@@ -228,15 +242,15 @@ export default function Subcontractors() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
-                <th className="px-4 py-3 font-medium">Contractor / Company</th>
-                <th className="px-4 py-3 font-medium">Service Type</th>
-                <th className="px-4 py-3 font-medium">Contact Person</th>
-                <th className="px-4 py-3 font-medium">WhatsApp / Contact</th>
-                <th className="px-4 py-3 font-medium">Location / Area</th>
-                <th className="px-4 py-3 font-medium">Experience</th>
-                <th className="px-4 py-3 font-medium">Workforce</th>
-                <th className="px-4 py-3 font-medium">Completed</th>
-                <th className="px-4 py-3 font-medium">Rating / Notes</th>
+                <EditableColumnHeader colKey="contractor" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="service_type" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="contact_person" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="contact" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="location" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="experience" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="workforce" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="completed" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="rating" labels={colLabels} defaults={SUB_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

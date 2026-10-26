@@ -7,10 +7,24 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import EditableSelect from "../../components/employee/EditableSelect";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
+
+const CC_COL_DEFAULTS = {
+  name: "Customer Name",
+  whatsapp: "WhatsApp Number",
+  service_project: "Service / Project",
+  property_type: "Property Type",
+  city_pincode: "City / Pincode",
+  deal_value: "Deal Value",
+  received: "Received",
+  pending: "Pending",
+  timeline: "Timeline",
+  warranty: "Warranty",
+};
 
 function formatCurrency(val) {
   if (val == null || isNaN(val)) return "₹0";
@@ -18,6 +32,7 @@ function formatCurrency(val) {
 }
 
 export default function ConstructionCustomers() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_construction_customers", CC_COL_DEFAULTS);
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
 
@@ -259,16 +274,16 @@ export default function ConstructionCustomers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
-                <th className="px-4 py-3 font-medium">Customer Name</th>
-                <th className="px-4 py-3 font-medium">WhatsApp Number</th>
-                <th className="px-4 py-3 font-medium">Service / Project</th>
-                <th className="px-4 py-3 font-medium">Property Type</th>
-                <th className="px-4 py-3 font-medium">City / Pincode</th>
-                <th className="px-4 py-3 font-medium">Deal Value</th>
-                <th className="px-4 py-3 font-medium">Received</th>
-                <th className="px-4 py-3 font-medium">Pending</th>
-                <th className="px-4 py-3 font-medium">Timeline</th>
-                <th className="px-4 py-3 font-medium">Warranty</th>
+                <EditableColumnHeader colKey="name" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="whatsapp" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="service_project" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="property_type" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="city_pincode" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="deal_value" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="received" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="pending" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="timeline" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="warranty" labels={colLabels} defaults={CC_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

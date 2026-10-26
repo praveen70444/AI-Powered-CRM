@@ -21,9 +21,21 @@ import {
 } from "../../services/employeeService";
 import { exportCustomers } from "../../services/exportService";
 import { getChurnRisk, getCustomerNextAction } from "../../services/aiService";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import api from "../../services/api";
 
 const PAGE_SIZE = 8;
+
+const CUSTOMER_COL_DEFAULTS = {
+  customer: "Customer",
+  venture: "Venture",
+  phone: "Phone No.",
+  flat_no: "Flat No.",
+  sq_ft: "Total Sq. Ft.",
+  total_spend: "Total Spend",
+  date_of_purchase: "Date of Purchase",
+  payment_mode: "Payment Mode",
+};
 
 const INDUSTRY_OPTIONS = [
   "Technology", "Real Estate", "Healthcare", "Finance", "Education",
@@ -245,10 +257,12 @@ function CustomerDetailPanel({ customer, onClose, onEdit, onDelete }) {
 
 // ── Main Customers Page ────────────────────────────────────────────────────
 function Customers() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_customers", CUSTOMER_COL_DEFAULTS);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
@@ -420,14 +434,14 @@ function Customers() {
                     onChange={(e) => setSelectedIds(e.target.checked ? pageItems.map(c => c.id) : [])}
                   />
                 </th>
-                <th className="px-4 py-3 font-medium">Customer</th>
-                <th className="px-4 py-3 font-medium">Venture</th>
-                <th className="px-4 py-3 font-medium">Phone No.</th>
-                <th className="px-4 py-3 font-medium">Flat No.</th>
-                <th className="px-4 py-3 font-medium">Total Sq. Ft.</th>
-                <th className="px-4 py-3 font-medium">Total Spend</th>
-                <th className="px-4 py-3 font-medium">Date of purchase</th>
-                <th className="px-4 py-3 font-medium">Payment Mode</th>
+                <EditableColumnHeader colKey="customer" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="venture" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="phone" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="flat_no" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="sq_ft" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="total_spend" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="date_of_purchase" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="payment_mode" labels={colLabels} defaults={CUSTOMER_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>

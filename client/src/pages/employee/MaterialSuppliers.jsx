@@ -7,12 +7,26 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import EditableSelect from "../../components/employee/EditableSelect";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
 
+const MAT_COL_DEFAULTS = {
+  supplier: "Supplier / Company",
+  material_category: "Material Category",
+  contact_person: "Contact Person",
+  contact: "WhatsApp / Contact",
+  location: "Location / Area",
+  supplier_type: "Supplier Type",
+  brands: "Brands / Products",
+  bulk_price: "Bulk Price",
+  moq: "MOQ",
+};
+
 export default function MaterialSuppliers() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_material_suppliers", MAT_COL_DEFAULTS);
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
 
@@ -250,15 +264,15 @@ export default function MaterialSuppliers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
-                <th className="px-4 py-3 font-medium">Supplier / Company</th>
-                <th className="px-4 py-3 font-medium">Material Category</th>
-                <th className="px-4 py-3 font-medium">Contact Person</th>
-                <th className="px-4 py-3 font-medium">WhatsApp / Contact</th>
-                <th className="px-4 py-3 font-medium">Location / Area</th>
-                <th className="px-4 py-3 font-medium">Supplier Type</th>
-                <th className="px-4 py-3 font-medium">Brands / Products</th>
-                <th className="px-4 py-3 font-medium">Bulk Price</th>
-                <th className="px-4 py-3 font-medium">MOQ</th>
+                <EditableColumnHeader colKey="supplier" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="material_category" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="contact_person" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="contact" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="location" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="supplier_type" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="brands" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="bulk_price" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="moq" labels={colLabels} defaults={MAT_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

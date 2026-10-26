@@ -15,6 +15,7 @@ import RowActions from "../../components/employee/RowActions";
 import TagsInput from "../../components/employee/TagsInput";
 import EditableSelect from "../../components/employee/EditableSelect";
 import EditableMultiSelect from "../../components/employee/EditableMultiSelect";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import { LEAD_STATUSES, LEAD_SOURCES } from "../../mock/leads";
 import {
@@ -249,9 +250,22 @@ function LeadDetailPanel({ lead, onClose, onUpdated }) {
 }
 
 // ── Main Leads Component ───────────────────────────────────────────────────
+const LEAD_COL_DEFAULTS = {
+  name: "Lead Name",
+  phone: "Contact No.",
+  lead_type: "Lead Type",
+  language: "Language",
+  location: "Location",
+  details: "Details",
+  budget: "Budget",
+  timeline: "Timeline",
+  status: "Status",
+};
+
 export default function Leads() {
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_leads", LEAD_COL_DEFAULTS);
 
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -532,15 +546,15 @@ export default function Leads() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
-                <th className="px-4 py-3 font-medium">Lead Name</th>
-                <th className="px-4 py-3 font-medium">Contact No.</th>
-                <th className="px-4 py-3 font-medium">Lead Type</th>
-                <th className="px-4 py-3 font-medium">Language</th>
-                <th className="px-4 py-3 font-medium">Location</th>
-                <th className="px-4 py-3 font-medium">Details</th>
-                <th className="px-4 py-3 font-medium">Budget</th>
-                <th className="px-4 py-3 font-medium">Timeline</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <EditableColumnHeader colKey="name" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="phone" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="lead_type" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="language" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="location" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="details" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="budget" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="timeline" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="status" labels={colLabels} defaults={LEAD_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>

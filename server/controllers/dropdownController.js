@@ -74,7 +74,7 @@ const getDropdownOptions = async (req, res) => {
 // POST /api/dropdowns/seed — seeds defaults for org if not already present
 const seedDropdownOptions = async (req, res) => {
   try {
-    const { organizationId, userId } = req.user;
+    const { organizationId } = req.user;
 
     const toInsert = [];
     for (const [vertical, categories] of Object.entries(DEFAULT_OPTIONS)) {
@@ -85,20 +85,20 @@ const seedDropdownOptions = async (req, res) => {
       }
     }
 
-    // Upsert — skip if already exists
+    // Upsert — skip if already exists (idempotent)
     for (const opt of toInsert) {
       await pool.query(
-        `INSERT INTO dropdown_options (organization_id, vertical, category, value, sort_order, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO dropdown_options (organization_id, vertical, category, value, sort_order)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (organization_id, vertical, category, value) DO NOTHING`,
-        [organizationId, opt.vertical, opt.category, opt.value, opt.sort_order, userId]
+        [organizationId, opt.vertical, opt.category, opt.value, opt.sort_order]
       );
     }
 
     res.json({ success: true, message: "Defaults seeded" });
   } catch (error) {
     console.error("Seed dropdown error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -124,7 +124,7 @@ const createDropdownOption = async (req, res) => {
       `INSERT INTO dropdown_options (organization_id, vertical, category, value, sort_order, created_by)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [organizationId, vertical, category, value.trim(), nextOrder, userId]
+      [organizationId, vertical, category, value.trim(), nextOrder, userId || null]
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -133,7 +133,7 @@ const createDropdownOption = async (req, res) => {
       return res.status(409).json({ success: false, message: "This option already exists" });
     }
     console.error("Create dropdown option error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -153,11 +153,13 @@ const updateDropdownOption = async (req, res) => {
 
     if (fields.length === 0) return res.status(400).json({ success: false, message: "Nothing to update" });
 
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(id, organizationId);
+    // updated_at is a SQL literal — NOT a bound param, so push id/orgId after fields
+    values.push(id);             // $(fields.length + 1)
+    values.push(organizationId); // $(fields.length + 2)
 
     const result = await pool.query(
-      `UPDATE dropdown_options SET ${fields.join(", ")}
+      `UPDATE dropdown_options
+       SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP
        WHERE id = $${values.length - 1} AND organization_id = $${values.length}
        RETURNING *`,
       values
@@ -167,7 +169,7 @@ const updateDropdownOption = async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error("Update dropdown option error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 

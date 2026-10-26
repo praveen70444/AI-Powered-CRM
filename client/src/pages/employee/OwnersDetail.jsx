@@ -7,12 +7,26 @@ import Pagination from "../../components/employee/Pagination";
 import EmptyState from "../../components/employee/EmptyState";
 import Modal from "../../components/employee/Modal";
 import EditableSelect from "../../components/employee/EditableSelect";
+import { EditableColumnHeader, useColumnLabels } from "../../components/employee/EditableColumnHeader";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const PAGE_SIZE = 10;
 
+const OD_COL_DEFAULTS = {
+  name: "Name",
+  contact: "Contact Number",
+  person: "Person",
+  property_type: "Property Type",
+  size: "Size",
+  purpose: "Purpose",
+  price_jd: "Price / Joint Dev",
+  village: "Village",
+  features: "Features",
+};
+
 export default function OwnersDetail() {
+  const { labels: colLabels, updateLabel: updateColLabel } = useColumnLabels("col_labels_owners_detail", OD_COL_DEFAULTS);
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "ORG_ADMIN";
 
@@ -238,15 +252,15 @@ export default function OwnersDetail() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-gray-50/50">
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Contact Number</th>
-                <th className="px-4 py-3 font-medium">Person</th>
-                <th className="px-4 py-3 font-medium">Property Type</th>
-                <th className="px-4 py-3 font-medium">Size</th>
-                <th className="px-4 py-3 font-medium">Purpose</th>
-                <th className="px-4 py-3 font-medium">Price / Joint Dev</th>
-                <th className="px-4 py-3 font-medium">Village</th>
-                <th className="px-4 py-3 font-medium">Features</th>
+                <EditableColumnHeader colKey="name" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="contact" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="person" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="property_type" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="size" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="purpose" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="price_jd" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="village" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
+                <EditableColumnHeader colKey="features" labels={colLabels} defaults={OD_COL_DEFAULTS} updateLabel={updateColLabel} />
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
